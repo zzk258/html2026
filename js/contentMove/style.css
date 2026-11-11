@@ -1,0 +1,4 @@
+﻿#topdiv,#bottomdiv{width:200px;height:100px;
+border:1px solid;word-break:break-all}
+span{width:20px;height:20px;position:absolute;transition:all 2s;margin-left:4px;}
+#box{position:relative}

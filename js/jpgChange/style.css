@@ -1,0 +1,6 @@
+﻿div,input,img,span{margin:0;padding:0;}
+#box{width:150px;text-align:center;position:absolute;left:100px;top:50px;}
+#pic{width:150px;height:150px;background:gray;display:block;}
+#box input{margin:5px;}
+#box p{position:absolute;width:150px;top:15px;}
+#box span{position:absolute;bottom:31px;width:150px;left:0;}

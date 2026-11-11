@@ -1,0 +1,41 @@
+
+<div id="myDiv"><h2>使用 AJAX 修改该文本内容</h2></div>
+<button type="button" id="btn">修改内容</button>
+
+<script>
+
+window.onload=function(){
+
+var btn=document.getElementById('btn');
+
+btn.onclick=function(){
+alert(1)
+
+    var xhr
+    //var xhr=new ActiveXObject("Microsoft.XMLHTTP");
+
+  if (window.XMLHttpRequest){
+    xhr = new XMLHttpRequest();
+  }else{
+    xhr = new ActiveXObject("microsoft.XMLHTTP")
+  }
+
+    xhr.open('get','./get.txt',true)；
+        xhr.send();
+
+    xhr.onreadystatechange=function(){
+        if(xhr.readyState == 4 && xhr.status==200){
+            alert(xhr.responseText);
+            
+        }else{
+            alert('err:'+xhr.status);
+        }
+    }
+    
+        
+    
+}
+
+
+}
+</script>

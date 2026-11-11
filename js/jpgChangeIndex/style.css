@@ -1,0 +1,16 @@
+﻿*{margin:0;padding:0; }
+
+#wrap{width:400px;height:400px; position:relative;border:1px solid;}
+
+#main{width:300px;height:398px; float:left;}
+
+#right{width:90px; height:398px; float:left;}
+
+#p1{ text-align:center;}
+#img1{ width:300px; height:300px;display:block; margin:20px 0 20px 0;}
+#p2{margin-bottom:0px;text-align:center;}
+
+.active{background:red;width:20px;height:20px;border:1px solid;display:block;margin:20px;}
+
+.spanr{width:20px;height:20px;border:1px solid;display:block;margin:20px;}
+ottom:31px;width:150px;left:0;}

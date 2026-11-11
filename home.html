@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="theme-color" content="#2563eb">
+	<title>ZZK 工作台 · 前端 / 网络 / 运维</title>
+	<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232563eb'/%3E%3Ctext x='32' y='45' font-size='34' font-weight='bold' text-anchor='middle' fill='white'%3E%3C/%3E%3C/text%3E%3C/svg%3E">
+	<link rel="stylesheet" href="home.css">
+	<link rel="stylesheet" href="更新日志/log-board.css">
+</head>
+<body class="module-front">
+
+<header class="topbar">
+	<div class="topbar-inner">
+		<div class="brand">
+			<span class="brand-logo" aria-hidden="true">
+				<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+			</span>
+			<div class="brand-text">
+				<strong>ZZK 工作台</strong>
+				<span>前端 · 网络 · 运维</span>
+			</div>
+		</div>
+
+		<!-- 项目切换：前端（默认） / 网络 / 运维 -->
+		<nav class="modules" id="modules" role="tablist" aria-label="项目切换">
+			<button type="button" class="module-btn active" role="tab" aria-selected="true" data-module="front">前端</button>
+			<button type="button" class="module-btn" role="tab" aria-selected="false" data-module="net">网络</button>
+			<button type="button" class="module-btn" role="tab" aria-selected="false" data-module="ops">运维</button>
+		</nav>
+
+		<div class="search">
+			<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
+			<input type="search" id="searchInput" placeholder="搜索案例…（如：轮播、购物车）" autocomplete="off">
+			<button type="button" id="searchClear" class="search-clear" title="清空" hidden>&times;</button>
+		</div>
+
+		<span class="topbar-meta" id="statTotal"></span>
+	</div>
+</header>
+
+<div class="layout" id="layout">
+
+	<!-- 侧栏：仅前端模块使用，分类 + 列表由 home.js 数据驱动渲染 -->
+	<aside class="sidebar" id="sidebar">
+		<nav class="nav" id="nav" aria-label="案例分类"></nav>
+		<footer class="sidebar-foot">
+			<p>点击案例在右侧预览；<br>右键「在新标签页打开」可单独查看。</p>
+		</footer>
+	</aside>
+
+	<main class="stage">
+
+		<!-- ===== 前端模块：工具栏 + 案例预览 ===== -->
+		<section class="front-stage" id="frontStage">
+			<div class="stage-bar">
+				<button type="button" class="btn-icon" id="btnMenu" title="收起/展开目录" aria-label="切换目录">
+					<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+				</button>
+				<div class="stage-info">
+					<strong id="curTitle">—</strong>
+					<span id="curDesc"></span>
+				</div>
+				<div class="stage-actions">
+					<button type="button" class="btn" id="btnReload" title="重新加载">
+						<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+						<span class="btn-text">刷新</span>
+					</button>
+					<a class="btn btn-primary" id="btnOpen" href="#" target="_blank" rel="noopener">
+						<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+						<span class="btn-text">新窗口打开</span>
+					</a>
+				</div>
+			</div>
+			<div class="stage-view">
+				<iframe id="preview" name="preview" src="about:blank" title="案例预览"></iframe>
+				<div class="stage-empty" id="stageEmpty">
+					<svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="9" x2="22" y2="9"/><circle cx="5.5" cy="6.5" r="0.5" fill="currentColor"/><circle cx="8" cy="6.5" r="0.5" fill="currentColor"/></svg>
+					<p>从左侧选择一个案例开始预览</p>
+				</div>
+			</div>
+		</section>
+
+		<!-- ===== 网络 / 运维模块：图文日志（组件见 更新日志/log-board.js） ===== -->
+		<section class="log-stage" id="logStage">
+			<div class="lb-slot" data-slot="net"></div>
+			<div class="lb-slot" data-slot="ops"></div>
+		</section>
+
+	</main>
+
+</div>
+
+<script src="更新日志/log-board.js"></script>
+<script src="home.js"></script>
+</body>
+</html>

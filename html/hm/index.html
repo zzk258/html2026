@@ -1,0 +1,183 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale-1.0" />
+		
+		<title>hm</title>
+		
+		<!-- <link rel="stylesheet" href="./css/normalize.css" /> -->
+		<link rel="stylesheet" href="./css/index.css" />
+		<link rel="stylesheet" href="./css/swiper.min.css" />
+	</head>
+	<body>
+	  <section class="wrap">
+		<div class="header">购物商城</div>
+		
+		
+		<!-- nav -->
+		<nav class="nav">
+			<a href="">
+				<img src="./icons/icon1.png" alt="">
+				<span>加油卡</span>
+			</a>
+			<a href="">
+				<img src="./icons/icon2.png" alt="">
+				<span>话费</span>
+			</a>
+			<a href="">
+				<img src="./icons/icon3.png" alt="">
+				<span>车票</span>
+			</a>
+			<a href="">
+				<img src="./icons/icon4.png" alt="">
+				<span>话费</span>
+			</a>
+			<a href="">
+				<img src="./icons/icon5.png" alt="">
+				<span>车票</span>
+			</a>
+			<a href="">
+				<img src="./icons/icon6.png" alt="">
+				<span>加油卡</span>
+			</a>
+		</nav>
+		<!-- go -->
+		<section class="go">
+			<img src="./images/go.png" alt="">
+		</section>
+	  </section>
+	
+	 <section class="content">
+		<div class="con-hd">
+			<h4>好货</h4>
+			<a href="">更多 >></a>
+		</div>
+		
+		<div class="con-bd">
+			<div class="focus1">
+			
+				<div class="swiper-container swiper-container-horizontal">
+				        <div class="swiper-wrapper">
+				            <div class="swiper-slide swiper-slide-active" style="width: 214.333px; margin-right: 30px;">
+				            	<a href="">
+				            		<img src="./images/focus_jpg/f2.jpg" alt="">
+				            	</a>
+				            	<p>精品推荐</p>
+				            </div>
+							<div class="swiper-slide swiper-slide-active" style="width: 214.333px; margin-right: 30px;">
+								<a href="">
+									<img src="./images/focus_jpg/f1.jpg" alt="">
+								</a>
+								<p>精品推荐</p>
+							</div>
+							<div class="swiper-slide swiper-slide-active" style="width: 214.333px; margin-right: 30px;">
+								<a href="">
+									<img src="./images/focus_jpg/f3.jpg" alt="">
+								</a>
+								<p>精品推荐</p>
+							</div>									            		            
+				        </div> 
+				</div>
+				<div class="swiper-button-prev"></div><!--左箭头。如果放置在swiper-container外面，需要自定义样式。-->
+				<div class="swiper-button-next"></div><!--右箭头。如果放置在swiper-container外面，需要自定义样式。-->
+				
+			</div>
+	 </section>
+	 
+	 
+	
+	 <section class="content content2">
+	 		<div class="con-hd">
+	 			<h4>秒杀</h4>
+	 			<a href="">更多 >></a>
+	 		</div>
+	 		
+	 		<div class="con-bd">
+	 			<div class="focus2">
+					
+					<div class="swiper-container2 swiper-container-horizontal">
+					        <div class="swiper-wrapper">
+					            <div class="swiper-slide swiper-slide-active" style="width: 214.333px; margin-right: 30px;">
+									<img src="./images/focus_jpg/1.jpg" alt="">
+									<h5>小米11 Pro 5G</h5>
+									<p>4599.00</p>
+								</div>
+					            <div class="swiper-slide swiper-slide-active" style="width: 214.333px; margin-right: 30px;">
+					            	<img src="./images/focus_jpg/2.jpg" alt="">
+					            	<h5>联想乐檬K12Pro</h5>
+					            	<p>849.00</p>
+					            </div>
+								<div class="swiper-slide swiper-slide-active" style="width: 214.333px; margin-right: 30px;">
+									<img src="./images/focus_jpg/3.jpg" alt="">
+									<h5>小明 Q1 迷你投影仪</h5>
+									<p>1088.00</p>
+								</div>
+								<div class="swiper-slide swiper-slide-active" style="width: 214.333px; margin-right: 30px;">
+									<img src="./images/focus_jpg/4.jpg" alt="">
+									<h5><h6 class="seckill-item__name">瑞慈体检</h5>
+									<p>3800.00</p>
+								</div>
+					        </div>
+					</div>
+						
+				</div>
+	 		</div>	
+	 </section>
+	 
+	<!-- --footer -->
+	 <section class="footer" >
+		<a href="#">
+			<img src="./icons/home.png" alt="">
+			<p>首页</p>
+		</a>
+		<a href="#">
+			<img src="./icons/net.png" alt="">
+			<p>菜单</p>
+		</a>
+		<a href="#">
+			<img src="./icons/ms.png" alt="">
+			<p>更多</p>
+		</a>
+		<a href="#">
+			<img src="./icons/user.png" alt="">
+			<p>用户</p>
+		</a>
+	 </section>
+	 
+	 
+	 
+	 
+	 
+	 <script src="./js/flexible.js"></script>
+	 <script src="./js/swiper.min.js"></script>
+	<script>
+		(function(){
+			var swiper = new Swiper('.swiper-container', {
+				
+			    slidesPerView: 2,
+			    paginationClickable: false,
+			    spaceBetween: 30,
+				centeredSlides:true,
+				loop:true,
+				navigation: {
+				      nextEl: '.swiper-button-next',
+				      prevEl: '.swiper-button-prev',
+				},
+			});
+		})();
+		
+		(function(){
+			
+			    var swiper = new Swiper('.swiper-container2', {
+			        pagination: '.swiper-pagination',
+			        slidesPerView: 2.2,
+			        paginationClickable: true,
+			        spaceBetween: 20,
+					loop:true
+			    });
+			   
+		})()
+	</script>
+	</body>
+</html>

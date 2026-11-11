@@ -1,0 +1,308 @@
+﻿
+
+	*{
+		padding: 0;
+		margin:0;
+	}
+	li{
+		list-style:none;
+	}
+	a{
+		text-decoration: none;
+	}
+	.clearfix::after {
+	  content: "";
+	  clear: both;
+	  display: table;
+	}
+	body{
+		background-color:#f3f5f7;
+	}
+	.w{
+		width:1200px;
+		margin: 0 auto;
+	}
+	.fl{
+		float:left;
+	}
+	.fr{
+		float:right;
+	}
+	.clearfix:before,.clearfix:after{
+		content:"";
+		display:table;
+	}
+	.clearfix:after{
+		clear:both;
+	}
+	.clearfix{
+		*zoom:1
+	}
+	
+	.header{
+		height:42px;
+		margin:30px auto;
+	}
+	.logo{
+		height:42px;
+		width:194px;
+		
+	}
+	.nav{
+		margin-left:60px;
+		line-height:42px;
+		
+	}
+	.nav li{
+		float:left;
+		list-style:none;
+		padding:0 27px;	
+	}
+	.nav a{
+		display:block;
+		height:40px;
+		
+		text-decoration:none;
+	}
+	.nav a:hover{
+		border-bottom: 2px solid aqua;
+		
+	}
+	.seach{
+		
+		height:42px;
+		width:411px;
+		margin-left:70px;
+	}
+	.seach input{
+		width:360px;
+		height:40px;
+		border:1px solid #00a4ff;
+		border-right:0;
+		color:#cdcdbf;
+		float:left;
+	}
+	.seach button{
+		width:50px;
+		height:42px;
+		border:0;
+		
+		float:left;
+		background-image: url(images/btn.png);
+	}
+	.user{
+		
+		height:42px;
+		line-height:42px;
+		margin-left: 56px;
+	}
+	.banner{
+		height:420px;
+		background-color: #1c036c;
+	}
+	.banner .w {
+		height:420px;
+		
+		background: url(images/banner_03.png) no-repeat top center;
+	}
+	.subnav{
+		width:190px;
+		height:420px;
+		background:rgb(0,0,0,0.3);
+	}
+	.subnav li{
+		height:44px;
+		line-height:44px;
+		padding:0 20px;
+		list-style:none;
+	}
+	.subnav li a{
+		font:14px 'Microsoft yahei';
+		color:#fff;
+		text-decoration:0;
+		height:44px;
+		line-height:44px;
+		display:block;
+	}
+	.subnav li a span{		
+		float:right;
+	}
+	.subnav li a:hover{
+		color:#00a4ff;
+	}
+	.course{
+		width:228px;
+		height:300px;
+		background:#fff;
+		margin-top:40px;
+	}
+	.course h1{
+		height:50px;
+		line-height:50px;
+		font-size:18px;
+		color: #fff;
+		text-align:center;
+		background-color:#9bceea;
+	}
+	.course .bd li{
+		list-style:none;
+		margin: 0 20px;
+		padding: 15px 0;
+		border-bottom: 1px solid #bfbfbf;
+	}
+	.course .bd li h3{
+		font-size:14px;
+	}
+	.course .bd li p{
+		font-size:12px;
+		color: #bfbfbf;
+	}
+	.course .bd a{
+		height:38px;
+		line-height:38px;
+		text-align: center;
+		border:1px solid #00A4FF;
+		text-decoration: 0;
+		display:block;
+		margin:5px 20px;
+		font-size: 16px;
+		color:#00a4ff;
+		font-weight: 600;
+	}
+
+/* ---精品模块部分 */
+.goods{
+	height:60px;
+	line-height:60px;
+	background-color:#fff;
+	margin-top:10px;
+	box-shadow: 0 2px 3px 3px rgba(0,0,0,0.3);
+}
+
+.goods h3{
+	font-size:16px;
+	font-weight: 700;
+	color:#00a4ff;
+	margin-left:25px;
+}
+.goods ul{
+	margin-left:30px;
+}
+.goods li{
+	
+	list-style:none;
+	float:left;
+	
+}
+.goods li a{
+	padding:0 30px;
+	border-left:1px solid #ccc;
+	text-decoration: none;
+	
+	
+}
+.goods .mod{
+	font-size:14px;
+	color:#00a4ff;
+	margin-right:30px;
+}
+
+/* --box部分 */
+.box{
+	margin-top:30px;
+	
+}
+.box .hd{
+	height:40px;
+}
+.box .hd h1{
+	font-size:20px;
+}
+.box .hd a{
+	font-size:14px;
+	color:#a5a5a5;
+	margin-top:10px;
+	margin-right:30px
+	
+}
+.box .bd{
+	width:1215px;
+	
+}
+
+.box .bd li{
+	float:left;
+	width:228px;
+	height:270px;
+	margin-right:15px;
+	margin-bottom:15px;
+	background-color:#fff;
+}
+
+.box .bd ul{
+	
+}
+.box .bd li h4{
+	padding:20px;
+	font-size:14px;
+}
+.box .bd li .info{
+	padding:0 20px 25px 20px;
+	font-size:14px;
+	color:#ccc;
+	font-size:12px;
+}
+.box .bd li .info span{
+	color:#ff7c2d;
+	font-size:12px;
+}
+/* --footer部分 */
+.footer{
+	width:100%;
+	height:500px;
+	background:#fff;
+}
+
+.footer .f-bd{
+	height:500px;
+}
+.footer .f-bd-l{
+	margin-left:25px;
+}
+.footer .f-bd-l img{
+	margin:30px 0 25px 0;
+}
+.footer .f-bd-l p{
+	width:436px;
+	height:30px;
+	font:12px '宋体';
+}
+.footer .f-bd-l a{
+	display: block;
+	width:118px;
+	height:38px;
+	line-height: 38px;
+	text-align: center;
+	border:1px solid #00a4ff;
+	margin-top:15px;
+	font-size:16px;
+	color: #00a4ff;
+}
+
+.footer .f-bd-r{
+	width:510px;
+	margin:30px;
+}
+.footer .f-bd-r li span{
+	height:20px;
+	line-height:20px;
+	font-size:12px
+}
+.footer .f-bd-r li h4{
+	font-size:16px;
+	height:25px;
+}
+
+.footer .f-bd-r .u2{
+	margin-left:146px;
+}

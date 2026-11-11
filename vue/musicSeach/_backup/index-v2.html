@@ -1,0 +1,134 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>在线音乐播放器</title>
+	<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230ea5e9'/%3E%3Cpath d='M26 18v22a6 6 0 1 1-4-5.7V14l20-4v22a6 6 0 1 1-4-5.7V16l-12 2z' fill='white'/%3E%3C/svg%3E">
+	<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+
+<div id="app" class="player" :class="{'is-playing': playing}">
+
+	<!-- 背景氛围 -->
+	<div class="bg-glow" :style="glowStyle"></div>
+
+	<!-- ===== 顶部：品牌 + 搜索 ===== -->
+	<header class="player-header">
+		<div class="brand">
+			<span class="brand-logo">
+				<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+			</span>
+			<span class="brand-name">悦听 · 音乐播放器</span>
+		</div>
+
+		<div class="search">
+			<svg class="search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+			<input v-model="keyword" @keyup.enter="doSearch" placeholder="搜索歌曲 / 歌手 / 专辑" />
+			<button class="search-btn" @click="doSearch">搜索</button>
+		</div>
+	</header>
+
+	<!-- ===== 主体 ===== -->
+	<div class="player-body">
+
+		<!-- 左侧：播放列表 -->
+		<aside class="playlist">
+			<div class="playlist-head">
+				<h3>播放列表 <span class="count">{{ songs.length }}</span></h3>
+				<button class="clear-btn" v-if="songs.length" @click="clearList" title="清空列表">
+					<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+				</button>
+			</div>
+
+			<div class="playlist-hint" v-if="!songs.length">
+				<p>输入关键词搜索你喜欢的歌</p>
+				<p class="hot" @click="quickSearch('周杰伦')">周杰伦</p>
+				<p class="hot" @click="quickSearch('林俊杰')">林俊杰</p>
+				<p class="hot" @click="quickSearch('邓紫棋')">邓紫棋</p>
+			</div>
+
+			<ul class="song-list">
+				<li v-for="(s, i) in songs"
+					:key="s.rid"
+					:class="{'active': s.rid === current.rid}"
+					@click="playIndex(i)">
+					<span class="idx" v-if="s.rid !== current.rid">{{ i + 1 }}</span>
+					<svg class="eq" v-else viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="4" y="10" width="3" height="8" rx="1"><animate attributeName="height" values="8;14;6;8" dur="0.9s" repeatCount="indefinite"/></rect><rect x="10" y="6" width="3" height="14" rx="1"><animate attributeName="height" values="14;6;10;14" dur="0.7s" repeatCount="indefinite"/></rect><rect x="16" y="9" width="3" height="10" rx="1"><animate attributeName="height" values="10;14;6;10" dur="1.1s" repeatCount="indefinite"/></rect></svg>
+					<div class="song-meta">
+						<span class="name">{{ s.name }}</span>
+						<span class="artist">{{ s.artist }} · {{ s.album }}</span>
+					</div>
+					<span class="dur">{{ fmtDur(s.duration) }}</span>
+				</li>
+			</ul>
+		</aside>
+
+		<!-- 右侧：封面 + 控制 -->
+		<section class="stage">
+			<div class="cover-wrap">
+				<div class="cover" :class="{'playing': playing}">
+					<svg class="cover-note" viewBox="0 0 24 24" width="80" height="80" fill="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+					<div class="vinyl-ring"></div>
+				</div>
+				<div class="song-info" v-if="current.name">
+					<h2 class="song-name">{{ current.name }}</h2>
+					<p class="song-artist">{{ current.artist }} — {{ current.album }}</p>
+				</div>
+				<div class="song-info empty" v-else>
+					<h2 class="song-name">准备聆听</h2>
+					<p class="song-artist">搜索并点击一首歌开始播放</p>
+				</div>
+			</div>
+
+			<!-- 控制栏 -->
+			<div class="controls">
+				<div class="ctrl-buttons">
+					<button class="ctrl-btn" @click="prev" title="上一首">
+						<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 6h2v12H6zM20 6l-10 6 10 6z"/></svg>
+					</button>
+					<button class="ctrl-btn play-btn" @click="togglePlay" title="播放/暂停">
+						<svg v-if="!playing" viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+						<svg v-else viewBox="0 0 24 24" width="28" height="28" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+					</button>
+					<button class="ctrl-btn" @click="next" title="下一首">
+						<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M16 6h2v12h-2zM4 6l10 6-10 6z"/></svg>
+					</button>
+				</div>
+
+				<!-- 进度条 -->
+				<div class="progress-row">
+					<span class="time">{{ fmtDur(curTime) }}</span>
+					<div class="progress" @click="seek">
+						<div class="progress-fill" :style="{width: progressPct + '%'}"></div>
+						<div class="progress-knob" :style="{left: progressPct + '%'}"></div>
+					</div>
+					<span class="time">{{ fmtDur(current.duration) }}</span>
+				</div>
+
+				<!-- 音量 -->
+				<div class="volume-row">
+					<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3z"/><path d="M16 9a4 4 0 010 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M18.5 6.5a8 8 0 010 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+					<div class="volume" @click="seekVolume">
+						<div class="progress-fill" :style="{width: volume + '%'}"></div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+	</div>
+
+	<!-- ===== 加载态 ===== -->
+	<div class="loading" v-show="loading">
+		<div class="spinner"></div>
+		<span>加载中...</span>
+	</div>
+
+	<audio ref="audio" @timeupdate="onTime" @ended="next" @loadedmetadata="onMeta" @canplay="loading=false"></audio>
+</div>
+
+<script type="text/javascript" src="vue.min.js"></script>
+<script type="text/javascript" src="main.js"></script>
+</body>
+</html>

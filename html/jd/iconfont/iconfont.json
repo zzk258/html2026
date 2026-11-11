@@ -1,0 +1,44 @@
+{
+  "id": "",
+  "name": "",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "22127503",
+      "name": "购物车6",
+      "font_class": "gouwuche6",
+      "unicode": "e60d",
+      "unicode_decimal": 58893
+    },
+    {
+      "icon_id": "22127504",
+      "name": "购物车2",
+      "font_class": "gouwuche2",
+      "unicode": "e60c",
+      "unicode_decimal": 58892
+    },
+    {
+      "icon_id": "22127507",
+      "name": "购物车5",
+      "font_class": "gouwuche5",
+      "unicode": "e60e",
+      "unicode_decimal": 58894
+    },
+    {
+      "icon_id": "22361484",
+      "name": "采购信息",
+      "font_class": "caigouxinxi",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "22412673",
+      "name": "上传凭证-面性-0",
+      "font_class": "shangchuanpingzheng-mianxing-0",
+      "unicode": "e696",
+      "unicode_decimal": 59030
+    }
+  ]
+}

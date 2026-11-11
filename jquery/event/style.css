@@ -1,0 +1,36 @@
+﻿
+*{margin:0;padding:0;}
+li {list-style:none}
+#div1{
+    width:402px;
+    margin:0 auto;
+    border:1px solid brown;
+}
+.content{
+    width:400px;
+    height:300px;
+    border:1px solid ;
+}
+
+.buttom{
+    width:400px;
+    height:150px;
+   
+}
+
+.buttom p{
+   
+    height:30px;
+}
+
+.buttom p input{
+   
+    height:30px;
+    width:60px;
+}
+
+.sendbar{
+   
+    
+}
+

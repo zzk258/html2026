@@ -1,0 +1,90 @@
+﻿*{margin:0;padding:0;}
+
+#shop .checkS{
+ 
+    height:150px;
+    
+
+}
+
+.fl{
+    float:left;
+}
+.fr{
+    float:right;
+}
+
+#shop{
+    width:600px;
+    
+   
+    margin:0 auto;
+}
+
+#shop li{
+    width:600px;
+    height:150px;
+    border:1px solid red;
+    list-style:none;
+    line-height:150px;
+    margin:5px;
+}
+
+#shop .commodity{
+    display:inline-block;
+    
+    width:100px;
+    text-align:center;
+}
+
+#shop p{
+    width:150px;
+    text-align:left;
+}
+
+#shop .amount{
+    width:50px;
+    text-align:center;
+}
+
+.increase,.recrease{
+    width:20px;
+    margin:6px;
+}
+
+.subtotal{
+   
+}
+
+.del{
+    margin-right:10px;
+
+}
+
+.divBt{
+    width:600px;
+    height:150px;
+    border:1px solid;
+    margin:5px;
+    position:relative;
+}
+
+.clearA{
+    width:50px;
+    display:block;
+    padding:10px;
+}
+
+.moneyA{
+    position:absolute;
+    width:250px;
+    right:50px;
+    bottom:10px;
+
+}
+
+
+.countA{
+   position:absolute;
+   bottom:10px;
+}
