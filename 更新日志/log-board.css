@@ -228,17 +228,17 @@
 .lb-empty strong { display: block; font-size: 14px; color: var(--c-text-2, #64748b); margin-bottom: 4px; }
 
 /* ---------------- 阅读页 ---------------- */
-.lb-reader-mask { background: rgba(15, 23, 42, .5); }
+.lb-mask.lb-reader-mask { background: rgba(15, 23, 42, .5); padding: 0; }
 
 .lb-reader {
 	width: 100%;
-	max-width: min(1180px, 94vw);
-	height: 94vh;
+	max-width: 100%;
+	height: 100vh;
 	display: flex;
 	flex-direction: column;
 	background: #fff;
-	border-radius: 14px;
-	box-shadow: 0 24px 60px rgba(15, 23, 42, .3);
+	border-radius: 0;
+	box-shadow: none;
 	overflow: hidden;
 }
 
@@ -271,9 +271,9 @@
 }
 
 .lb-reader-scroll > div {
-	max-width: 980px;
+	max-width: 1080px;
 	margin: 0 auto;
-	padding: 0 clamp(24px, 5vw, 64px);
+	padding: 0 clamp(24px, 4vw, 72px);
 }
 
 .lb-reader-cover {
