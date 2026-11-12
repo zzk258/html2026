@@ -279,10 +279,11 @@
 .lb-reader-cover {
 	display: block;
 	width: 100%;
-	max-height: 320px;
+	height: 320px;
 	object-fit: cover;
 	margin: 22px 0 18px;
 	border-radius: 10px;
+	background: #f1f5f9;
 }
 
 .lb-reader-title {
