@@ -407,9 +407,43 @@
 			.then((data) => {
 				if (!data) return [];
 				const list = Array.isArray(data) ? data : (Array.isArray(data.entries) ? data.entries : []);
-				return list.map(normalizeEntry).filter(Boolean);
+				const entries = list.map(normalizeEntry).filter(Boolean);
+				writeSeedCache(modId, entries);
+				return entries;
 			})
 			.catch(() => []);
+	}
+
+	/* ---------------- 已发布数据缓存（让第二次打开瞬间出内容） ---------------- */
+
+	const SEED_CACHE_TTL = 12 * 60 * 60 * 1000;   // 12 小时
+	const SEED_CACHE_MAX = 400 * 1024;            // 单模块缓存上限，防止塞满配额
+
+	function seedKey(modId) {
+		return 'zzk.seed.' + modId;
+	}
+
+	function readSeedCache(modId) {
+		try {
+			const raw = localStorage.getItem(seedKey(modId));
+			if (!raw) return [];
+			const obj = JSON.parse(raw);
+			if (!obj || !Array.isArray(obj.entries)) return [];
+			if (Date.now() - (obj.at || 0) > SEED_CACHE_TTL) return [];
+			return obj.entries;
+		} catch (e) {
+			return [];
+		}
+	}
+
+	function writeSeedCache(modId, entries) {
+		try {
+			const raw = JSON.stringify({ at: Date.now(), entries });
+			if (raw.length > SEED_CACHE_MAX) return;
+			localStorage.setItem(seedKey(modId), raw);
+		} catch (e) {
+			/* 配额满时忽略，不影响显示 */
+		}
 	}
 
 	/* ---------------- 图片压缩 ---------------- */
@@ -598,8 +632,7 @@
 			title: opt.title,
 			seed: [],              // 仓库里已发布的内容（data/<id>.json）
 			seedLoaded: false,
-			seedLoading: location.protocol !== 'file:' && typeof fetch === 'function',
-			locals: readEntries(opt.id),   // 本浏览器写/改过的条目
+			seedLoading: location.protocol !== 'file:' && typeof fetch === 'function',			locals: readEntries(opt.id),   // 本浏览器写/改过的条目
 			entries: [],           // 合并后的展示数据
 			keyword: '',
 			draft: null,
@@ -608,6 +641,9 @@
 			confirmCb: null,
 			els: {}
 		};
+
+		/* 有上次的缓存就先画出来，网络数据回来后覆盖，体感上「秒开」 */
+		inst.seed = readSeedCache(opt.id).map(normalizeEntry).filter(Boolean);
 
 		container.innerHTML = shellHtml(opt, listId);
 
