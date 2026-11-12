@@ -576,8 +576,8 @@
 				<div class="lb-reader-bar">
 					<span class="lb-reader-module" data-role="rd-module"></span>
 					<div class="lb-reader-acts">
-						<button type="button" class="lb-btn" data-act="rd-edit">编辑</button>
-						<button type="button" class="lb-btn lb-btn-danger-ghost" data-act="rd-del">删除</button>
+						${ONLINE_READONLY ? '' : `<button type="button" class="lb-btn" data-act="rd-edit">编辑</button>
+						<button type="button" class="lb-btn lb-btn-danger-ghost" data-act="rd-del">删除</button>`}
 						<button type="button" class="lb-x" data-act="rd-close" aria-label="关闭">&times;</button>
 					</div>
 				</div>
