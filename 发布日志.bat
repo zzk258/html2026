@@ -15,6 +15,17 @@ if errorlevel 1 (
   )
 )
 
+set "PS=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if exist "%PS%" (
+  echo [0/3] 从下载目录同步最新导出...
+  "%PS%" -NoProfile -ExecutionPolicy Bypass -File "更新日志\同步导出.ps1"
+  echo.
+) else (
+  echo [0/3] 没找到 Windows PowerShell，跳过自动同步。
+  echo       请手动把导出的 net.json / ops.json 覆盖到 更新日志\data\
+  echo.
+)
+
 echo [1/3] 暂存改动...
 "%GIT%" add -A
 "%GIT%" diff --cached --quiet
