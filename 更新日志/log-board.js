@@ -1032,7 +1032,7 @@
 			if (!entry) return;
 			const atts = entry.attachments || [];
 			const tip = atts.length
-				? `；该篇的 ${atts.length} 个附件在 ${displayDir(entry)}，删除后需要手动清理`
+				? `；该篇的 ${atts.length} 个附件在 ${displayDir(entry)}，导出后双击「发布日志.bat」会自动清掉`
 				: '';
 
 			confirmBox(`确定删除「${entry.title || '这篇日志'}」吗？删除后无法恢复${tip}。`, '删除', async () => {
@@ -1050,9 +1050,9 @@
 
 				if (!atts.length) return;
 
-				// 只有自动写入建立的专属目录能直接删；手动模式的文件在公共 files/ 里，交给清理脚本
+				// 只有自动写入建立的专属目录能直接删；手动模式的文件在公共 files/ 里，交给发布脚本清理
 				if (!entry.attachDir) {
-					toast('已删除；附件在 更新日志/files/，可运行 更新日志/清理附件.ps1 清掉', 6000);
+					toast('已删除；导出后双击「发布日志.bat」，附件会一起清掉', 6000);
 					return;
 				}
 

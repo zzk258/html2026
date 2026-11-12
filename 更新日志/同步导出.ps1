@@ -19,6 +19,10 @@ if (-not (Test-Path -LiteralPath $Downloads)) {
 	exit 0
 }
 
+$copied = 0
+$marker = Join-Path $here ".sync-ok"
+if (Test-Path -LiteralPath $marker) { Remove-Item -LiteralPath $marker -Force }
+
 $targets = @(
 	@{ Module = 'net'; Pattern = 'net*.json' },
 	@{ Module = 'ops'; Pattern = 'ops*.json' }
@@ -62,6 +66,7 @@ foreach ($t in $targets) {
 	}
 
 	Copy-Item -LiteralPath $src.FullName -Destination $dest -Force
+	$copied++
 	"已同步 {0}：{1} -> data\{0}.json（{2} 篇）" -f $t.Module, $src.Name, $entries.Count
 }
 $total = 0
@@ -75,4 +80,9 @@ foreach ($m in @('net', 'ops')) {
 }
 if ($total -eq 0) {
 	"提醒：两边的数据都还是空的，先确认浏览器里点过「导出」并且文件落在下载目录。"
+}
+
+if ($copied -gt 0) {
+	Set-Content -LiteralPath $marker -Value (Get-Date -Format "yyyy-MM-dd HH:mm:ss") -Encoding utf8
+	"本次同步了 {0} 个模块，可以进行残留清理。" -f $copied
 }

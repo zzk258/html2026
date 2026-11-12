@@ -16,26 +16,37 @@ if errorlevel 1 (
 )
 
 set "PS=%SystemRoot%\System32\WindowsPowerShell\v1.0\powershell.exe"
+if exist "更新日志\.sync-ok" del /q "更新日志\.sync-ok"
+
 if exist "%PS%" (
-  echo [0/3] 从下载目录同步最新导出...
+  echo [1/4] 从下载目录同步最新导出...
   "%PS%" -NoProfile -ExecutionPolicy Bypass -File "更新日志\同步导出.ps1"
   echo.
 ) else (
-  echo [0/3] 没找到 Windows PowerShell，跳过自动同步。
+  echo [1/4] 没找到 Windows PowerShell，跳过自动同步。
   echo       请手动把导出的 net.json / ops.json 覆盖到 更新日志\data\
   echo.
 )
 
-echo [1/3] 暂存改动...
+if exist "更新日志\.sync-ok" (
+  echo [2/4] 清理已删除日志留下的附件...
+  "%PS%" -NoProfile -ExecutionPolicy Bypass -File "更新日志\清理附件.ps1" -Apply
+  del /q "更新日志\.sync-ok"
+  echo.
+) else (
+  echo [2/4] 本次没有同步到新导出，跳过清理（避免误删刚放进 files 的附件）。
+  echo.
+)
+
+echo [3/4] 暂存改动...
 "%GIT%" add -A
 "%GIT%" diff --cached --quiet
 if not errorlevel 1 goto nothing
 
-echo [2/3] 提交...
+echo [4/4] 提交并推送...
 "%GIT%" commit -m "更新日志 %DATE% %TIME%"
 if errorlevel 1 goto fail
 
-echo [3/3] 推送...
 "%GIT%" push
 if errorlevel 1 goto fail
 
