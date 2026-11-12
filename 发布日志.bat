@@ -1,5 +1,5 @@
 @echo off
-chcp 65001 >nul
+if exist "%SystemRoot%\System32\chcp.com" "%SystemRoot%\System32\chcp.com" 65001 >nul 2>nul
 setlocal
 cd /d "%~dp0"
 
