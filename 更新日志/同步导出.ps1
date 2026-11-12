@@ -1,4 +1,4 @@
-# 把浏览器「导出」下载到的 net*.json / ops*.json，同步进 更新日志/data/
+﻿# 把浏览器「导出」下载到的 net*.json / ops*.json，同步进 更新日志/data/
 # 由 发布日志.bat 在提交前自动调用；也可单独运行：
 #   powershell -ExecutionPolicy Bypass -File .\更新日志\同步导出.ps1 -DryRun
 param(
