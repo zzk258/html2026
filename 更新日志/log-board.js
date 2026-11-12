@@ -27,6 +27,17 @@
 	const JPEG_QUALITY = 0.8;      // 压缩质量
 	const DEFAULT_TAGS = ['项目介绍', '网络', '运维', '故障处理', '配置变更', '日常巡检'];
 
+	/* 线上部署（http/https 且非本地地址）按只读处理：不允许删除，也不写墓碑，刷新即恢复 */
+	const ONLINE_READONLY = (() => {
+		try {
+			if (location.protocol !== 'http:' && location.protocol !== 'https:') return false;
+			const host = String(location.hostname || '');
+			return !/^(localhost|127\.0\.0\.1|::1)$/.test(host);
+		} catch (e) {
+			return false;
+		}
+	})();
+
 	/* ---------------- 通用工具 ---------------- */
 
 	function esc(s) {
@@ -376,6 +387,8 @@
 	}
 
 	function writeTombstones(modId, ids) {
+		// 线上只读：不落墓碑，删了刷新就恢复
+		if (ONLINE_READONLY) return;
 		try {
 			localStorage.setItem(delKey(modId), JSON.stringify(ids.slice(0, 500)));
 		} catch (e) { /* 空间不足时忽略，不影响正文 */ }
@@ -436,16 +449,16 @@
 					<div class="lb-title">
 						<strong>${esc(opt.title)}</strong>
 						<span class="lb-count" data-role="count">共 0 篇</span>
-						<span class="lb-sub">${esc(opt.desc)}</span>
+						<span class="lb-sub">${ONLINE_READONLY ? '线上只读：修改请在本地 index.html 完成' : esc(opt.desc)}</span>
 					</div>
 					<div class="lb-tools">
 						<div class="lb-search">
 							<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
 							<input type="search" data-role="search" placeholder="搜索标题 / 标签 / 正文" autocomplete="off">
 						</div>
-						<button type="button" class="lb-btn" data-act="import" title="从 JSON 文件导入">导入</button>
+						${ONLINE_READONLY ? '' : `<button type="button" class="lb-btn" data-act="import" title="从 JSON 文件导入">导入</button>
 						<button type="button" class="lb-btn" data-act="export" title="导出站点数据：覆盖 更新日志/data/&lt;id&gt;.json 后推送">导出</button>
-						<button type="button" class="lb-btn lb-btn-primary" data-act="new">＋ 写日志</button>
+						<button type="button" class="lb-btn lb-btn-primary" data-act="new">＋ 写日志</button>`}
 					</div>
 				</div>
 				<div class="lb-body">
@@ -726,16 +739,16 @@
 						</div>
 					</div>
 					<div class="lb-post-acts">
-						<button type="button" class="lb-mini" data-act="edit" data-id="${esc(e.id)}">编辑</button>
-						<button type="button" class="lb-mini danger" data-act="del" data-id="${esc(e.id)}">删除</button>
+						${ONLINE_READONLY ? '' : `<button type="button" class="lb-mini" data-act="edit" data-id="${esc(e.id)}">编辑</button>
+						<button type="button" class="lb-mini danger" data-act="del" data-id="${esc(e.id)}">删除</button>`}
 					</div>
 				</article>`;
 		}
 
 		function emptyHtml(searching) {
-			return searching
-				? '<div class="lb-empty"><strong>没有匹配的日志</strong>换个关键词试试</div>'
-				: `<div class="lb-empty"><strong>还没有日志</strong>点击右上角「＋ 写日志」，用一篇文章介绍一个项目</div>`;
+			if (searching) return '<div class="lb-empty"><strong>没有匹配的日志</strong>换个关键词试试</div>';
+			if (ONLINE_READONLY) return '<div class="lb-empty"><strong>还没有日志</strong>发布入口在本地：写完导出后双击「发布日志.bat」</div>';
+			return `<div class="lb-empty"><strong>还没有日志</strong>点击右上角「＋ 写日志」，用一篇文章介绍一个项目</div>`;
 		}
 
 		function render() {
@@ -895,6 +908,10 @@
 		}
 
 		function openEditor(entry) {
+			if (ONLINE_READONLY) {
+				toast('线上只读，不能编辑；请在本地 index.html 修改后发布', 4200);
+				return;
+			}
 			inst.draft = {
 				id: entry ? entry.id : uid(),     // 新建也先生成 ID，自动写入时目录当场就能定下来
 				createdAt: entry ? entry.createdAt : 0,
@@ -1030,6 +1047,10 @@
 		function askDelete(id) {
 			const entry = findEntry(id);
 			if (!entry) return;
+			if (ONLINE_READONLY) {
+				toast('线上只读，不能删除；请在本地 index.html 里删除后发布', 4200);
+				return;
+			}
 			const atts = entry.attachments || [];
 			const tip = atts.length
 				? `；该篇的 ${atts.length} 个附件在 ${displayDir(entry)}，导出后双击「发布日志.bat」会自动清掉`
