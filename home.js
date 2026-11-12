@@ -1,9 +1,9 @@
 /* ============================================================
-   home.js — 工作台主页（前端案例 / 网络日志 / 运维日志）
+   home.js — 工作台主页（项目案例 / 网络博文 / 运维博文）
    设计要点：
    1. 唯一数据源 DATA —— 侧栏列表与预览均由它渲染
-   2. 三个项目模块（前端 / 网络 / 运维）由顶栏切换，前端为默认
-   3. 网络 / 运维 的图文日志交给「更新日志」组件（LogBoard）托管
+   2. 三个项目模块（项目 / 网络 / 运维）由顶栏切换，项目为默认
+   3. 网络 / 运维 的图文内容交给「更新日志」组件（LogBoard）托管
    4. 事件委托 + hash 记忆 + 新窗口打开 + iframe 刷新
    ============================================================ */
 
@@ -54,6 +54,7 @@ const DATA = [
 		name: '项目开发案例',
 		icon: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
 		items: [
+			{ name: '企业官网 · 蓝天IT服务', url: 'vue/website/index.html', desc: '单文件企业官网：IT 建设与运维维修服务展示，深蓝主题、锚点导航、咨询入口与响应式布局' },
 			{ name: '在线音乐播放器', url: 'vue/musicSeach/index.html', desc: '歌曲搜索 + 播放列表，支持搜索歌手/专辑、推荐榜单与响应式适配，桌面与移动端通用' },
 			{ name: '极简阅读器', url: 'vue/极简阅读器/index.html', desc: '本地导入 EPUB 电子书，支持拖拽打开、阅读进度记录、笔记面板与排版主题切换' }
 		]

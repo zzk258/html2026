@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蓝天IT服务 · 企业IT建设与运维维修专家</title>
+<meta name="description" content="蓝天公司主营IT服务，提供IT建设（系统集成、网络机房、云与数据中心）与运维维修（驻场运维、设备维修、快速响应）一站式承包服务。">
+<style>
+  :root{
+    --sky-900:#0a2540;
+    --sky-800:#0f3460;
+    --sky-700:#165a9e;
+    --sky-600:#1e78d4;
+    --sky-500:#3a9bf0;
+    --sky-400:#6fb8f7;
+    --sky-050:#eef5fd;
+    --ink:#132238;
+    --ink-soft:#495a70;
+    --line:#e2eaf4;
+    --white:#fff;
+    --accent:#ff7a45;
+    --accent-soft:#fff1ea;
+    --radius:16px;
+    --shadow:0 10px 40px rgba(15,52,96,.08);
+    --shadow-lg:0 24px 60px rgba(15,52,96,.16);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--ink);line-height:1.7;background:var(--white);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{line-height:1.25;font-weight:800;letter-spacing:.01em}
+  a{text-decoration:none;color:inherit}
+  .container{width:100%;max-width:1160px;margin:0 auto;padding:0 24px}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;padding:13px 26px;border-radius:999px;
+    font-weight:700;font-size:15px;cursor:pointer;border:2px solid transparent;transition:.25s;white-space:nowrap;
+  }
+  .btn-primary{background:var(--sky-600);color:#fff}
+  .btn-primary:hover{background:var(--sky-700);transform:translateY(-2px);box-shadow:0 10px 24px rgba(30,120,212,.35)}
+  .btn-accent{background:var(--accent);color:#fff}
+  .btn-accent:hover{background:#f2632f;transform:translateY(-2px);box-shadow:0 10px 24px rgba(255,122,69,.35)}
+  .btn-ghost{border-color:rgba(255,255,255,.4);color:#fff}
+  .btn-ghost:hover{background:rgba(255,255,255,.12);border-color:#fff}
+  .btn-outline{border-color:var(--sky-600);color:var(--sky-700)}
+  .btn-outline:hover{background:var(--sky-050)}
+  section{scroll-margin-top:80px}
+
+  /* ===== 顶部导航 ===== */
+  header{
+    position:fixed;top:0;left:0;right:0;z-index:100;transition:.3s;
+    background:rgba(255,255,255,.85);backdrop-filter:blur(14px);border-bottom:1px solid transparent;
+  }
+  header.scrolled{border-bottom-color:var(--line);box-shadow:0 4px 20px rgba(15,52,96,.06)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+  .logo{display:flex;align-items:center;gap:11px;font-weight:900;font-size:21px;color:var(--sky-800)}
+  .logo .mark{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(135deg,var(--sky-500),var(--sky-700));
+    display:grid;place-items:center;color:#fff;box-shadow:0 6px 16px rgba(30,120,212,.4);
+  }
+  .logo .mark svg{width:22px;height:22px}
+  .logo small{display:block;font-size:11px;font-weight:600;color:var(--sky-500);letter-spacing:.16em;margin-top:-2px}
+  nav ul{display:flex;gap:34px;list-style:none}
+  nav ul a{font-size:15px;font-weight:600;color:var(--ink-soft);position:relative;transition:.2s}
+  nav ul a:hover{color:var(--sky-700)}
+  nav ul a::after{content:"";position:absolute;left:0;bottom:-6px;width:0;height:3px;border-radius:3px;background:var(--sky-600);transition:.25s}
+  nav ul a:hover::after{width:100%}
+  .nav-cta{display:flex;align-items:center;gap:14px}
+  .menu-btn{display:none;background:none;border:none;cursor:pointer;color:var(--sky-800)}
+  .menu-btn svg{width:28px;height:28px}
+
+  /* ===== Hero ===== */
+  .hero{
+    position:relative;padding:150px 0 120px;overflow:hidden;
+    background:
+      radial-gradient(1100px 600px at 85% -10%,rgba(58,155,240,.35),transparent 60%),
+      radial-gradient(800px 500px at 0% 100%,rgba(15,52,96,.5),transparent 55%),
+      linear-gradient(160deg,var(--sky-900),var(--sky-800) 55%,#0c2c52);
+    color:#fff;
+  }
+  .hero::before{
+    content:"";position:absolute;inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:46px 46px;mask-image:radial-gradient(circle at 70% 30%,#000,transparent 75%);
+  }
+  .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:60px;align-items:center}
+  .badge-hero{
+    display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:999px;
+    background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);font-size:13.5px;font-weight:600;margin-bottom:26px;
+  }
+  .badge-hero .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 0 4px rgba(74,222,128,.25)}
+  .hero h1{font-size:54px;font-weight:900;letter-spacing:-.01em}
+  .hero h1 .hl{background:linear-gradient(90deg,var(--sky-400),#a5d8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.lead{font-size:19px;color:#c6dbf2;margin:22px 0 34px;max-width:520px}
+  .hero-btns{display:flex;gap:16px;flex-wrap:wrap}
+  .hero-stats{display:flex;gap:44px;margin-top:52px;padding-top:34px;border-top:1px solid rgba(255,255,255,.14)}
+  .hero-stats .n{font-size:34px;font-weight:900;color:#fff}
+  .hero-stats .l{font-size:13.5px;color:#9dbfe0;margin-top:2px}
+
+  .hero-card{
+    background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:26px;
+    backdrop-filter:blur(10px);box-shadow:var(--shadow-lg);
+  }
+  .hc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .hc-head .t{font-weight:800;font-size:17px}
+  .hc-live{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:#4ade80;font-weight:700}
+  .hc-live .dot{width:7px;height:7px;border-radius:50%;background:#4ade80;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .hc-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-top:1px solid rgba(255,255,255,.1)}
+  .hc-ic{width:42px;height:42px;border-radius:12px;background:rgba(58,155,240,.22);display:grid;place-items:center;flex-shrink:0}
+  .hc-ic svg{width:20px;height:20px;color:var(--sky-400)}
+  .hc-row .info{flex:1}
+  .hc-row .info b{font-size:14.5px;display:block}
+  .hc-row .info span{font-size:12.5px;color:#9dbfe0}
+  .hc-row .tag{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(74,222,128,.18);color:#4ade80}
+
+  /* ===== 通用 section ===== */
+  .sec{padding:96px 0}
+  .sec.alt{background:var(--sky-050)}
+  .sec-head{text-align:center;max-width:680px;margin:0 auto 60px}
+  .eyebrow{
+    display:inline-block;font-size:13px;font-weight:800;letter-spacing:.18em;color:var(--sky-600);
+    text-transform:uppercase;margin-bottom:14px;
+  }
+  .sec-head h2{font-size:40px;color:var(--sky-900)}
+  .sec-head p{font-size:17px;color:var(--ink-soft);margin-top:16px}
+
+  /* 服务卡片 */
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+  .card{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:32px 28px;
+    transition:.3s;position:relative;overflow:hidden;
+  }
+  .card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,var(--sky-500),var(--sky-700));transform:scaleX(0);transform-origin:left;transition:.35s}
+  .card:hover{transform:translateY(-8px);box-shadow:var(--shadow-lg);border-color:transparent}
+  .card:hover::before{transform:scaleX(1)}
+  .card .ic{width:56px;height:56px;border-radius:14px;background:var(--sky-050);display:grid;place-items:center;margin-bottom:20px;transition:.3s}
+  .card:hover .ic{background:var(--sky-600)}
+  .card .ic svg{width:28px;height:28px;color:var(--sky-600);transition:.3s}
+  .card:hover .ic svg{color:#fff}
+  .card h3{font-size:21px;color:var(--sky-900);margin-bottom:6px}
+  .card .sub{font-size:13px;font-weight:700;color:var(--sky-500);margin-bottom:14px}
+  .card p{font-size:14.5px;color:var(--ink-soft);margin-bottom:18px}
+  .card ul{list-style:none}
+  .card ul li{font-size:14px;color:var(--ink-soft);padding:5px 0 5px 22px;position:relative}
+  .card ul li::before{content:"";position:absolute;left:0;top:12px;width:7px;height:7px;border-radius:50%;background:var(--sky-400)}
+
+  /* 两大板块 */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+  .split-card{border-radius:22px;padding:42px 38px;color:#fff;position:relative;overflow:hidden}
+  .split-card.build{background:linear-gradient(150deg,var(--sky-700),var(--sky-900))}
+  .split-card.maint{background:linear-gradient(150deg,#ff8a5c,var(--accent))}
+  .split-card::after{content:"";position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.08)}
+  .split-card .big-ic{width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.16);display:grid;place-items:center;margin-bottom:22px}
+  .split-card .big-ic svg{width:34px;height:34px;color:#fff}
+  .split-card h3{font-size:27px;margin-bottom:12px}
+  .split-card>p{color:rgba(255,255,255,.9);font-size:15.5px;margin-bottom:24px}
+  .split-list{display:grid;gap:12px}
+  .split-list .it{display:flex;gap:12px;align-items:flex-start;font-size:15px;color:rgba(255,255,255,.95)}
+  .split-list .it svg{width:20px;height:20px;flex-shrink:0;margin-top:3px;color:#fff}
+
+  /* 流程 */
+  .flow{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;counter-reset:s}
+  .flow .step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px 24px;position:relative}
+  .flow .step .num{font-size:44px;font-weight:900;color:var(--sky-050);line-height:1;margin-bottom:10px;counter-increment:s}
+  .flow .step .num::before{content:"0" counter(s)}
+  .flow .step h4{font-size:18px;color:var(--sky-900);margin-bottom:8px}
+  .flow .step p{font-size:14px;color:var(--ink-soft)}
+
+  /* 为什么选择 */
+  .why{display:grid;grid-template-columns:.9fr 1.1fr;gap:60px;align-items:center}
+  .why-visual{
+    border-radius:24px;padding:40px;color:#fff;
+    background:radial-gradient(600px 400px at 80% 10%,rgba(58,155,240,.4),transparent),linear-gradient(160deg,var(--sky-800),var(--sky-900));
+    box-shadow:var(--shadow-lg);
+  }
+  .why-visual .q{font-size:22px;font-weight:800;line-height:1.5;margin-bottom:26px}
+  .why-visual .sign{display:flex;align-items:center;gap:12px}
+  .why-visual .sign .av{width:46px;height:46px;border-radius:50%;background:var(--sky-500);display:grid;place-items:center;font-weight:800}
+  .why-visual .sign b{font-size:15px;display:block}
+  .why-visual .sign span{font-size:13px;color:#9dbfe0}
+  .why-list{display:grid;gap:18px}
+  .why-item{display:flex;gap:18px;padding:22px;border-radius:14px;border:1px solid var(--line);background:#fff;transition:.25s}
+  .why-item:hover{border-color:var(--sky-400);box-shadow:var(--shadow)}
+  .why-item .ci{width:48px;height:48px;border-radius:12px;background:var(--sky-050);display:grid;place-items:center;flex-shrink:0}
+  .why-item .ci svg{width:24px;height:24px;color:var(--sky-600)}
+  .why-item h4{font-size:17px;color:var(--sky-900);margin-bottom:4px}
+  .why-item p{font-size:14px;color:var(--ink-soft)}
+
+  /* 数据条 */
+  .stats-bar{background:var(--sky-900);color:#fff;padding:64px 0}
+  .stats-bar .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:30px;text-align:center}
+  .stats-bar .n{font-size:44px;font-weight:900;background:linear-gradient(90deg,var(--sky-400),#a5d8ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stats-bar .l{font-size:14.5px;color:#9dbfe0;margin-top:6px}
+
+  /* 案例 */
+  .cases{display:grid;grid-template-columns:repeat(2,1fr);gap:26px}
+  .case{
+    border-radius:18px;overflow:hidden;border:1px solid var(--line);background:#fff;transition:.3s;
+  }
+  .case:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+  .case-top{padding:30px 30px 24px;background:linear-gradient(135deg,var(--sky-050),#fff);border-bottom:1px solid var(--line)}
+  .case-top .ind{display:inline-block;font-size:12.5px;font-weight:800;color:var(--sky-600);background:#fff;border:1px solid var(--sky-400);padding:5px 12px;border-radius:999px;margin-bottom:14px}
+  .case-top h3{font-size:20px;color:var(--sky-900)}
+  .case-body{padding:24px 30px 30px}
+  .case-body p{font-size:14.5px;color:var(--ink-soft);margin-bottom:18px}
+  .case-res{display:flex;gap:24px}
+  .case-res .r .v{font-size:22px;font-weight:900;color:var(--accent)}
+  .case-res .r .k{font-size:12.5px;color:var(--ink-soft)}
+
+  /* 客户logo墙 */
+  .clients{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;margin-top:50px}
+  .clients .cl{
+    padding:14px 30px;border:1px solid var(--line);border-radius:12px;background:#fff;
+    font-weight:800;color:var(--ink-soft);font-size:15px;transition:.2s;
+  }
+  .clients .cl:hover{border-color:var(--sky-400);color:var(--sky-700);box-shadow:var(--shadow)}
+
+  /* CTA */
+  .cta{
+    position:relative;overflow:hidden;border-radius:28px;padding:70px 56px;text-align:center;color:#fff;
+    background:radial-gradient(700px 400px at 50% -20%,rgba(58,155,240,.5),transparent),linear-gradient(150deg,var(--sky-700),var(--sky-900));
+    box-shadow:var(--shadow-lg);
+  }
+  .cta::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:40px 40px;mask-image:radial-gradient(circle at 50% 0,#000,transparent 70%)}
+  .cta h2{font-size:38px;position:relative}
+  .cta p{font-size:18px;color:#c6dbf2;margin:16px 0 32px;position:relative}
+  .cta .btns{display:flex;gap:16px;justify-content:center;position:relative}
+
+  /* 联系 */
+  .contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:50px}
+  .contact-info .ci-block{display:flex;gap:16px;margin-bottom:28px}
+  .contact-info .ci-ic{width:50px;height:50px;border-radius:13px;background:var(--sky-050);display:grid;place-items:center;flex-shrink:0}
+  .contact-info .ci-ic svg{width:24px;height:24px;color:var(--sky-600)}
+  .contact-info .ci-block b{font-size:16px;color:var(--sky-900);display:block;margin-bottom:3px}
+  .contact-info .ci-block p{font-size:15px;color:var(--ink-soft)}
+  .form{background:#fff;border:1px solid var(--line);border-radius:20px;padding:34px;box-shadow:var(--shadow)}
+  .form h3{font-size:22px;color:var(--sky-900);margin-bottom:6px}
+  .form .fsub{font-size:14px;color:var(--ink-soft);margin-bottom:24px}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:13.5px;font-weight:700;color:var(--ink);margin-bottom:7px}
+  .field input,.field select,.field textarea{
+    width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:14.5px;
+    font-family:inherit;color:var(--ink);transition:.2s;background:#fbfdff;
+  }
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--sky-500);box-shadow:0 0 0 4px rgba(58,155,240,.14);background:#fff}
+  .field textarea{resize:vertical;min-height:96px}
+  .form .btn{width:100%;justify-content:center;margin-top:6px}
+  .form .tip{font-size:12.5px;color:var(--ink-soft);text-align:center;margin-top:14px}
+  .form-sent{display:none;text-align:center;padding:20px 0}
+  .form-sent .ok{width:60px;height:60px;border-radius:50%;background:#e7f8ee;display:grid;place-items:center;margin:0 auto 16px}
+  .form-sent .ok svg{width:32px;height:32px;color:#22a15a}
+  .form-sent h4{font-size:20px;color:var(--sky-900);margin-bottom:8px}
+  .form-sent p{font-size:14.5px;color:var(--ink-soft)}
+
+  /* 页脚 */
+  footer{background:var(--sky-900);color:#9dbfe0;padding:64px 0 0}
+  .foot-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1.2fr;gap:40px;padding-bottom:48px}
+  .foot-brand .logo{color:#fff;margin-bottom:16px}
+  .foot-brand p{font-size:14px;color:#8fb0d4;max-width:280px}
+  .foot-col h5{font-size:15px;color:#fff;margin-bottom:16px;font-weight:800}
+  .foot-col ul{list-style:none;display:grid;gap:10px}
+  .foot-col ul a{font-size:14px;color:#8fb0d4;transition:.2s}
+  .foot-col ul a:hover{color:#fff;padding-left:4px}
+  .foot-bottom{border-top:1px solid rgba(255,255,255,.1);padding:24px 0;text-align:center;font-size:13px;color:#7a9cc0}
+
+  /* 滚动出现动画 */
+  .reveal{opacity:0;transform:translateY(28px);transition:.7s cubic-bezier(.2,.6,.2,1)}
+  .reveal.show{opacity:1;transform:none}
+
+  /* 响应式 */
+  @media(max-width:980px){
+    .hero-grid{grid-template-columns:1fr;gap:44px}
+    .hero h1{font-size:42px}
+    .cards,.flow{grid-template-columns:1fr 1fr}
+    .split,.why,.cases,.contact-grid{grid-template-columns:1fr}
+    .why{gap:36px}
+    .foot-grid{grid-template-columns:1fr 1fr;gap:30px}
+    nav ul,.nav-cta .btn-outline{display:none}
+    .menu-btn{display:block}
+  }
+  @media(max-width:600px){
+    .container{padding:0 18px}
+    .hero{padding:120px 0 90px}
+    .hero h1{font-size:33px}
+    .hero p.lead{font-size:17px}
+    .hero-stats{gap:24px;flex-wrap:wrap}
+    .hero-stats .n{font-size:27px}
+    .sec{padding:70px 0}
+    .sec-head h2{font-size:30px}
+    .cards,.flow{grid-template-columns:1fr}
+    .stats-bar .grid{grid-template-columns:1fr 1fr;gap:26px}
+    .cta{padding:50px 26px}
+    .cta h2{font-size:28px}
+    .foot-grid{grid-template-columns:1fr}
+    .form{padding:24px}
+  }
+
+  /* 移动端菜单 */
+  .mobile-nav{position:fixed;inset:0 0 0 auto;width:78%;max-width:320px;background:var(--sky-900);z-index:200;transform:translateX(100%);transition:.35s;padding:90px 30px 30px;display:flex;flex-direction:column;gap:6px}
+  .mobile-nav.open{transform:none;box-shadow:-20px 0 60px rgba(0,0,0,.3)}
+  .mobile-nav a{color:#c6dbf2;font-size:17px;font-weight:600;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .mobile-nav .btn{margin-top:20px;justify-content:center}
+  .overlay{position:fixed;inset:0;background:rgba(10,37,64,.5);z-index:150;opacity:0;pointer-events:none;transition:.3s}
+  .overlay.show{opacity:1;pointer-events:auto}
+</style>
+</head>
+<body>
+
+<!-- 导航 -->
+<header id="header">
+  <div class="container nav">
+    <a href="#home" class="logo">
+      <span class="mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6-1.5A4.5 4.5 0 0 0 6.5 19h11Z"/><path d="M12 12v5"/><path d="M9.5 14.5 12 12l2.5 2.5"/></svg>
+      </span>
+      <span>蓝天<small>BLUE SKY IT</small></span>
+    </a>
+    <nav>
+      <ul>
+        <li><a href="#home">首页</a></li>
+        <li><a href="#services">IT服务</a></li>
+        <li><a href="#cases">客户案例</a></li>
+        <li><a href="#about">关于我们</a></li>
+        <li><a href="#contact">联系我们</a></li>
+      </ul>
+    </nav>
+    <div class="nav-cta">
+      <a href="#contact" class="btn btn-outline" style="padding:9px 20px;font-size:14px">预约上门勘察</a>
+      <a href="tel:4008880000" class="btn btn-primary" style="padding:9px 20px;font-size:14px">400-888-0000</a>
+      <button class="menu-btn" id="menuBtn" aria-label="菜单">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="overlay" id="overlay"></div>
+<div class="mobile-nav" id="mobileNav">
+  <a href="#home">首页</a>
+  <a href="#services">IT服务</a>
+  <a href="#cases">客户案例</a>
+  <a href="#about">关于我们</a>
+  <a href="#contact">联系我们</a>
+  <a href="#contact" class="btn btn-primary">预约上门勘察</a>
+</div>
+
+<!-- Hero -->
+<section class="hero" id="home">
+  <div class="container hero-grid">
+    <div>
+      <span class="badge-hero"><span class="dot"></span>企业级 IT 建设 · 运维维修一站式承包</span>
+      <h1>让企业 IT<br><span class="hl">建得好，也稳得住</span></h1>
+      <p class="lead">蓝天专注企业 IT 服务，从网络机房建设到日常运维维修全程承包。一个团队，包办您从 0 到 1 的信息化落地与 7×24 小时稳定守护。</p>
+      <div class="hero-btns">
+        <a href="#contact" class="btn btn-accent">免费获取方案报价
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a href="#services" class="btn btn-ghost">了解服务范围</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="n">15<sup>+</sup></div><div class="l">年行业深耕</div></div>
+        <div><div class="n">2000<sup>+</sup></div><div class="l">服务企业客户</div></div>
+        <div><div class="n">99.9<sup>%</sup></div><div class="l">系统可用率</div></div>
+        <div><div class="n">30<sup>min</sup></div><div class="l">故障快速响应</div></div>
+      </div>
+    </div>
+
+    <div class="hero-card">
+      <div class="hc-head">
+        <span class="t">运维监控中心</span>
+        <span class="hc-live"><span class="dot"></span>实时监控中</span>
+      </div>
+      <div class="hc-row">
+        <div class="hc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h10"/></svg></div>
+        <div class="info"><b>核心网络设备</b><span>交换机 / 路由 / 防火墙</span></div>
+        <span class="tag">正常</span>
+      </div>
+      <div class="hc-row">
+        <div class="hc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></div>
+        <div class="info"><b>服务器与存储</b><span>CPU 42% · 内存 58%</span></div>
+        <span class="tag">正常</span>
+      </div>
+      <div class="hc-row">
+        <div class="hc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a5 5 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M8 12h8"/></svg></div>
+        <div class="info"><b>机房环境动力</b><span>温度 22℃ · 湿度 45%</span></div>
+        <span class="tag">正常</span>
+      </div>
+      <div class="hc-row">
+        <div class="hc-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <div class="info"><b>本月工单处理</b><span>已完成 386 / 388</span></div>
+        <span class="tag">99.5%</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 服务总览 -->
+<section class="sec" id="services">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Our Services</span>
+      <h2>两大主线，承包企业 IT 全生命周期</h2>
+      <p>无论是从零搭建信息化底座，还是让现有系统长期稳定运行，蓝天都能以"总承包"方式交付，您只需对接一个团队。</p>
+    </div>
+
+    <div class="split reveal">
+      <div class="split-card build">
+        <div class="big-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22h20"/><path d="M6 18V9l6-4 6 4v9"/><path d="M10 18v-5h4v5"/></svg>
+        </div>
+        <h3>IT 建设</h3>
+        <p>从规划到落地，交付一套能扛住业务增长的信息化基础设施。</p>
+        <div class="split-list">
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>网络与弱电：综合布线、机房工程、无线覆盖</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>系统集成：服务器、存储、虚拟化、域控与办公系统</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>云与数据中心：私有云、混合云、数据迁移上云</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>安防与智能：视频监控、门禁道闸、会议与广播系统</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>安全合规：防火墙、上网行为管理、等保整改支撑</div>
+        </div>
+      </div>
+
+      <div class="split-card maint">
+        <div class="big-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.2-.3-.3-2.2 2.5-2.5Z"/></svg>
+        </div>
+        <h3>运维维修</h3>
+        <p>建完之后不撒手，长期驻场与远程兜底，让故障停在发生之前。</p>
+        <div class="split-list">
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>驻场运维：专属工程师坐班，桌面终端与网络日常保障</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>设备维修：电脑、打印机、服务器、交换机板级维修</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>巡检保养：定期上门体检，隐患提前发现并出具报告</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>应急响应：30 分钟响应，远程+到场双通道处置</div>
+          <div class="it"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>设备租赁与备机：关键设备故障期间提供替代设备</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 细项卡片 -->
+    <div class="cards reveal" style="margin-top:30px">
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M6 9h.01M10 9h.01M14 9h4M6 14h12"/></svg></div>
+        <h3>网络与机房工程</h3>
+        <div class="sub">IT 建设 · 基础设施</div>
+        <p>按业务规模设计网络拓扑与机房布局，一次到位，避免后期反复返工。</p>
+        <ul>
+          <li>结构化综合布线与光纤熔接</li>
+          <li>标准机房建设：UPS、配电、精密空调、机柜</li>
+          <li>有线/无线一体化覆盖与漫游优化</li>
+          <li>多运营商接入、负载均衡与链路冗余</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+        <h3>系统集成与上云</h3>
+        <div class="sub">IT 建设 · 平台搭建</div>
+        <p>把服务器、存储、办公系统整合成一套能协同运转的整体，而不是一堆孤立设备。</p>
+        <ul>
+          <li>服务器部署、虚拟化与高可用集群</li>
+          <li>数据备份、容灾与异地同步方案</li>
+          <li>私有云 / 混合云搭建与平滑迁移</li>
+          <li>OA、ERP、邮件等办公系统落地实施</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 0-4 4v6a6 6 0 0 0 8 0V6a4 4 0 0 0-4-4Z"/><path d="M8 13h8M8 17h8"/></svg></div>
+        <h3>信息安全体系</h3>
+        <div class="sub">IT 建设 · 风险防护</div>
+        <p>从边界到终端层层设防，兼顾业务连续性与合规要求。</p>
+        <ul>
+          <li>防火墙、上网行为管理与准入控制</li>
+          <li>病毒防护、补丁管理与漏洞扫描</li>
+          <li>等保 2.0 咨询与整改支撑</li>
+          <li>数据防泄漏与权限审计</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/></svg></div>
+        <h3>驻场与托管运维</h3>
+        <div class="sub">运维维修 · 长期服务</div>
+        <p>工程师像内部 IT 部门一样工作，按年签约，人力成本远低于自建团队。</p>
+        <ul>
+          <li>全职/兼职驻场工程师，灵活配置</li>
+          <li>远程监控 + 7×24 小时服务热线</li>
+          <li>资产台账、软件正版与生命周期管理</li>
+          <li>月度运维报告与改进建议</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.2-.3-.3-2.2 2.5-2.5Z"/></svg></div>
+        <h3>设备维修与备机</h3>
+        <div class="sub">运维维修 · 按需响应</div>
+        <p>覆盖主流品牌 IT 设备，能修不换、能救不拖，尽量挽回停机损失。</p>
+        <ul>
+          <li>台式机、笔记本、一体机维修保养</li>
+          <li>打印机、复印机、扫描仪上门维修</li>
+          <li>服务器、交换机、存储硬件修复</li>
+          <li>维修期间提供同规格备用设备</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+        <h3>巡检与应急保障</h3>
+        <div class="sub">运维维修 · 主动预防</div>
+        <p>把"坏了再修"变成"提前发现"，重大活动期间还可安排现场值守。</p>
+        <ul>
+          <li>季度/月度上门巡检与健康体检</li>
+          <li>网络链路、机房动力环境监测</li>
+          <li>突发故障 30 分钟响应、快速到场</li>
+          <li>年会、发布会等重大活动 IT 保障</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 服务流程 -->
+<section class="sec alt">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Process</span>
+      <h2>从勘察到交付，四步走完</h2>
+      <p>全程有书面方案和验收标准，做到每一步都可追溯、可验收。</p>
+    </div>
+    <div class="flow reveal">
+      <div class="step"><div class="num"></div><h4>需求勘察</h4><p>工程师上门调研现状，摸清网络、设备与业务痛点，输出勘察记录。</p></div>
+      <div class="step"><div class="num"></div><h4>方案报价</h4><p>提供含拓扑图、设备清单、工期与分项报价的方案，费用透明无隐藏项。</p></div>
+      <div class="step"><div class="num"></div><h4>施工交付</h4><p>持证施工、规范布线，全程不影响正常办公，完工后逐项验收并移交文档。</p></div>
+      <div class="step"><div class="num"></div><h4>运维托管</h4><p>进入运维期，配置监控、巡检计划与服务专线，故障按 SLA 时限处理。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 为什么选蓝天 -->
+<section class="sec">
+  <div class="container">
+    <div class="why">
+      <div class="why-visual reveal">
+        <div class="q">"我们不想同时管五家供应商，蓝天一家就把网络、机房和系统都接下来了。"</div>
+        <div class="sign">
+          <div class="av">王</div>
+          <div><b>王先生 · 信息中心负责人</b><span>某连锁零售企业（300+ 门店）</span></div>
+        </div>
+      </div>
+      <div class="why-list">
+        <div class="sec-head reveal" style="text-align:left;margin:0 0 10px">
+          <span class="eyebrow">Why Us</span>
+          <h2 style="font-size:34px">为什么企业选择蓝天</h2>
+        </div>
+        <div class="why-item reveal">
+          <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V5l-8-3Z"/><path d="M9 12l2 2 4-4"/></svg></div>
+          <div><h4>建设与运维同一团队，责任不推诿</h4><p>系统出问题不用在建设方和运维方之间扯皮，一个问题找我们到底。</p></div>
+        </div>
+        <div class="why-item reveal">
+          <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><h4>30 分钟响应，写进合同</h4><p>响应时限、到场时限、恢复时限全部量化为 SLA 条款，未达标按约处理。</p></div>
+        </div>
+        <div class="why-item reveal">
+          <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+          <div><h4>报价分项透明，按年可谈</h4><p>设备、施工、服务分开报价，支持整包年服或按次结算，预算好控制。</p></div>
+        </div>
+        <div class="why-item reveal">
+          <div class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div><h4>持证工程师团队，不外包转手</h4><p>核心工程师均为自有员工，持有厂商与行业认证，人员稳定、交接有序。</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 数据条 -->
+<section class="stats-bar">
+  <div class="container grid reveal">
+    <div><div class="n" data-n="15" data-suf="+">0</div><div class="l">年企业 IT 服务经验</div></div>
+    <div><div class="n" data-n="2000" data-suf="+">0</div><div class="l">累计服务企业客户</div></div>
+    <div><div class="n" data-n="38600" data-suf="">0</div><div class="l">累计处理运维工单</div></div>
+    <div><div class="n" data-n="99.9" data-suf="%" data-dec="1">0</div><div class="l">关键系统可用率</div></div>
+  </div>
+</section>
+
+<!-- 案例 -->
+<section class="sec" id="cases">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Cases</span>
+      <h2>真实项目，看得见的结果</h2>
+      <p>覆盖制造、零售、医疗、教育等行业，规模从 30 人到 3000 人不等。</p>
+    </div>
+    <div class="cases">
+      <div class="case reveal">
+        <div class="case-top">
+          <span class="ind">智能制造 · 600 人</span>
+          <h3>精密制造厂网络重建 + 三年运维托管</h3>
+        </div>
+        <div class="case-body">
+          <p>原车间网络频繁掉线影响产线系统，蓝天重做全域布线与工业级组网，划分生产/办公双网隔离，并签订三年驻场运维合同。</p>
+          <div class="case-res">
+            <div class="r"><div class="v">↓ 92%</div><div class="k">网络故障次数</div></div>
+            <div class="r"><div class="v">18 天</div><div class="k">整体改造工期</div></div>
+            <div class="r"><div class="v">3 年</div><div class="k">持续运维托管</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case reveal">
+        <div class="case-top">
+          <span class="ind">连锁零售 · 300+ 门店</span>
+          <h3>连锁门店机房建设与集中运维</h3>
+        </div>
+        <div class="case-body">
+          <p>为总部建设标准机房与私有云，统一门店接入与视频监控回传，门店设备统一纳管，故障远程先行处理、必要时就近上门。</p>
+          <div class="case-res">
+            <div class="r"><div class="v">300+</div><div class="k">纳管门店</div></div>
+            <div class="r"><div class="v">76%</div><div class="k">故障远程解决率</div></div>
+            <div class="r"><div class="v">4 小时</div><div class="k">到场时限</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case reveal">
+        <div class="case-top">
+          <span class="ind">医疗机构 · 二级医院</span>
+          <h3>HIS 系统服务器迁移与容灾备份</h3>
+        </div>
+        <div class="case-body">
+          <p>在不中断门诊的前提下完成 HIS/PACS 系统平滑迁移至虚拟化平台，配置双机热备与异地备份，夜间窗口分批切换。</p>
+          <div class="case-res">
+            <div class="r"><div class="v">0 分钟</div><div class="k">业务停机时间</div></div>
+            <div class="r"><div class="v">RPO 15min</div><div class="k">数据恢复点目标</div></div>
+            <div class="r"><div class="v">等保三级</div><div class="k">协助通过测评</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="case reveal">
+        <div class="case-top">
+          <span class="ind">教育机构 · 国际学校</span>
+          <h3>校园弱电智能化与年度维修承包</h3>
+        </div>
+        <div class="case-body">
+          <p>承建校园网络、多媒体教室、广播与门禁系统，并签年度维修承包：教室设备、办公终端、打印设备统一纳入服务范围。</p>
+          <div class="case-res">
+            <div class="r"><div class="v">86 间</div><div class="k">多媒体教室</div></div>
+            <div class="r"><div class="v">↓ 40%</div><div class="k">年度 IT 支出</div></div>
+            <div class="r"><div class="v">全年</div><div class="k">维修承包覆盖</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="clients reveal">
+      <div class="cl">精工制造集团</div>
+      <div class="cl">华联商超连锁</div>
+      <div class="cl">仁和医院</div>
+      <div class="cl">博雅国际学校</div>
+      <div class="cl">中远物流</div>
+      <div class="cl">海纳科技园</div>
+      <div class="cl">金鼎金融</div>
+      <div class="cl">悦居物业</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="sec" style="padding-top:0">
+  <div class="container">
+    <div class="cta reveal">
+      <h2>先上门勘察，再谈方案</h2>
+      <p>工程师免费上门评估现状，3 个工作日内出具书面方案与分项报价，不合适不签约。</p>
+      <div class="btns">
+        <a href="#contact" class="btn btn-accent">预约免费勘察</a>
+        <a href="tel:4008880000" class="btn btn-ghost">拨打 400-888-0000</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 关于我们 -->
+<section class="sec alt" id="about">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">About蓝天</span>
+      <h2>十五年，只做企业 IT 这一件事</h2>
+      <p>蓝天成立于 2011 年，从一间机房布线起步，成长为覆盖 IT 建设与运维维修的综合服务商。我们不做硬件倒卖，把力气花在交付质量和长期服务上。</p>
+    </div>
+    <div class="cards reveal">
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2s5 4 5 10a5 5 0 0 1-10 0c0-2 1-4 2-5"/><path d="M8 22h8"/></svg></div>
+        <h3>企业使命</h3>
+        <div class="sub">让 IT 不再是负担</div>
+        <p>企业应该把精力放在自己的主营业务上。我们存在的意义，是让客户不必再为网络掉线、服务器宕机、打印机罢工分心。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+        <h3>企业愿景</h3>
+        <div class="sub">做最省心的 IT 承包方</div>
+        <p>成为中小企业首选的 IT 长期合作伙伴——建设时靠谱，运维时在场，报价时坦诚，合作五年以上仍愿意续约。</p>
+      </div>
+      <div class="card">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 7.5 8 9 4.5-1.5 8-4 8-9V5l-8-3Z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3>核心价值观</h3>
+        <div class="sub">先解决问题，再谈费用</div>
+        <p>故障面前先恢复业务、后追溯责任；方案面前讲清利弊、不夸大配置；合同之外也接得住客户的临时求助。</p>
+      </div>
+    </div>
+
+    <div class="stats-bar" style="border-radius:24px;margin-top:40px;padding:44px 20px">
+      <div class="grid reveal" style="grid-template-columns:repeat(4,1fr)">
+        <div><div class="n" data-n="2011" data-suf="">0</div><div class="l">成立年份</div></div>
+        <div><div class="n" data-n="86" data-suf="">0</div><div class="l">自有工程师</div></div>
+        <div><div class="n" data-n="12" data-suf="">0</div><div class="l">服务城市</div></div>
+        <div><div class="n" data-n="95" data-suf="%" data-dec="0">0</div><div class="l">客户续约率</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 联系我们 -->
+<section class="sec" id="contact">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="eyebrow">Contact</span>
+      <h2>说说你的 IT 问题</h2>
+      <p>留下需求，工程师会在 2 个工作小时内回电，先免费沟通，再决定要不要上门。</p>
+    </div>
+    <div class="contact-grid">
+      <div class="contact-info reveal">
+        <div class="ci-block">
+          <div class="ci-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2Z"/></svg></div>
+          <div><b>服务热线</b><p>400-888-0000（7×24 小时）<br>故障报修专线：0755-8888-0001</p></div>
+        </div>
+        <div class="ci-block">
+          <div class="ci-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 6l8 6 8-6"/></svg></div>
+          <div><b>商务邮箱</b><p>service@bluesky-it.com<br>方案与报价：sales@bluesky-it.com</p></div>
+        </div>
+        <div class="ci-block">
+          <div class="ci-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.5 7-12a7 7 0 1 0-14 0c0 5.5 7 12 7 12Z"/><circle cx="12" cy="10" r="2.5"/></svg></div>
+          <div><b>公司地址</b><p>深圳市南山区科技园南路蓝天大厦 18 楼<br>（服务覆盖珠三角，可跨省派工）</p></div>
+        </div>
+        <div class="ci-block">
+          <div class="ci-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+          <div><b>服务时间</b><p>驻场服务：工作日 8:30–18:30<br>应急报修：全年无休，30 分钟响应</p></div>
+        </div>
+      </div>
+
+      <div class="form reveal">
+        <h3>预约免费勘察</h3>
+        <p class="fsub">带 * 为必填项，信息仅用于本次方案沟通。</p>
+        <form id="reqForm">
+          <div class="field">
+            <label>您的称呼 *</label>
+            <input type="text" name="name" placeholder="如：张经理" required>
+          </div>
+          <div class="field">
+            <label>联系电话 *</label>
+            <input type="tel" name="phone" placeholder="工程师将通过此号码回电" required>
+          </div>
+          <div class="field">
+            <label>公司名称</label>
+            <input type="text" name="company" placeholder="选填">
+          </div>
+          <div class="field">
+            <label>需求类型 *</label>
+            <select name="type" required>
+              <option value="">请选择</option>
+              <option>IT 建设（网络 / 机房 / 弱电）</option>
+              <option>系统集成与上云</option>
+              <option>信息安全与等保</option>
+              <option>驻场 / 托管运维</option>
+              <option>设备维修</option>
+              <option>巡检与应急保障</option>
+              <option>不确定，需要工程师建议</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>需求描述</label>
+            <textarea name="desc" placeholder="例如：公司搬到新办公室，约 80 个工位，需要从布线到网络、监控整套建起来；现有打印机经常卡纸想一起看看……"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">提交预约</button>
+          <p class="tip">提交即表示同意蓝天就本次需求与您联系，我们不会对外泄露您的信息。</p>
+        </form>
+        <div class="form-sent" id="formSent">
+          <div class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <h4>预约已收到</h4>
+          <p>感谢您的信任，工程师会在 2 个工作小时内回电确认上门时间。<br>紧急情况请直接拨打 400-888-0000。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer>
+  <div class="container">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a href="#home" class="logo">
+          <span class="mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6-1.5A4.5 4.5 0 0 0 6.5 19h11Z"/><path d="M12 12v5"/><path d="M9.5 14.5 12 12l2.5 2.5"/></svg>
+          </span>
+          <span>蓝天<small>BLUE SKY IT</small></span>
+        </a>
+        <p>企业 IT 建设与运维维修总承包服务商。建得好，也稳得住。</p>
+      </div>
+      <div class="foot-col">
+        <h5>IT 建设</h5>
+        <ul>
+          <li><a href="#services">网络与机房工程</a></li>
+          <li><a href="#services">系统集成</a></li>
+          <li><a href="#services">云与数据中心</a></li>
+          <li><a href="#services">安防与智能化</a></li>
+          <li><a href="#services">信息安全等保</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>运维维修</h5>
+        <ul>
+          <li><a href="#services">驻场运维</a></li>
+          <li><a href="#services">设备维修</a></li>
+          <li><a href="#services">定期巡检</a></li>
+          <li><a href="#services">应急响应</a></li>
+          <li><a href="#services">备机租赁</a></li>
+        </ul>
+      </div>
+      <div class="foot-col">
+        <h5>联系我们</h5>
+        <ul>
+          <li><a href="tel:4008880000">400-888-0000</a></li>
+          <li><a href="mailto:service@bluesky-it.com">service@bluesky-it.com</a></li>
+          <li><a href="#contact">深圳市南山区科技园南路</a></li>
+          <li><a href="#contact">预约免费上门勘察</a></li>
+          <li><a href="#cases">查看客户案例</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="foot-bottom">© 2026 蓝天信息技术服务有限公司 · 粤ICP备00000000号 · 本站为演示站点，联系电话与备案号均为示例</div>
+  </div>
+</footer>
+
+<script>
+  // 导航栏滚动态
+  const header=document.getElementById('header');
+  const onScroll=()=>header.classList.toggle('scrolled',window.scrollY>20);
+  onScroll();window.addEventListener('scroll',onScroll,{passive:true});
+
+  // 移动端菜单
+  const mBtn=document.getElementById('menuBtn'),
+        mNav=document.getElementById('mobileNav'),
+        overlay=document.getElementById('overlay');
+  const closeMenu=()=>{mNav.classList.remove('open');overlay.classList.remove('show');};
+  mBtn.addEventListener('click',()=>{mNav.classList.add('open');overlay.classList.add('show');});
+  overlay.addEventListener('click',closeMenu);
+  mNav.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
+
+  // 滚动出现动画
+  const io=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('show');io.unobserve(e.target);}});
+  },{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // 数字滚动
+  const countUp=el=>{
+    const target=parseFloat(el.dataset.n), suf=el.dataset.suf||'', dec=+(el.dataset.dec||0);
+    const dur=1500, t0=performance.now();
+    const tick=t=>{
+      const p=Math.min((t-t0)/dur,1);
+      const ease=1-Math.pow(1-p,3);
+      const v=target*ease;
+      el.textContent=(dec? v.toFixed(dec): Math.round(v).toLocaleString('en-US'))+suf;
+      if(p<1)requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
+  const io2=new IntersectionObserver(es=>{
+    es.forEach(e=>{if(e.isIntersecting){countUp(e.target);io2.unobserve(e.target);}});
+  },{threshold:.6});
+  document.querySelectorAll('[data-n]').forEach(el=>io2.observe(el));
+
+  // 表单提交（演示：仅前端反馈）
+  const form=document.getElementById('reqForm');
+  form.addEventListener('submit',e=>{
+    e.preventDefault();
+    form.style.display='none';
+    document.getElementById('formSent').style.display='block';
+  });
+</script>
+</body>
+</html>
