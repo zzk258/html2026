@@ -64,3 +64,15 @@ foreach ($t in $targets) {
 	Copy-Item -LiteralPath $src.FullName -Destination $dest -Force
 	"已同步 {0}：{1} -> data\{0}.json（{2} 篇）" -f $t.Module, $src.Name, $entries.Count
 }
+$total = 0
+foreach ($m in @('net', 'ops')) {
+	$f = Join-Path $dataDir ($m + '.json')
+	if (-not (Test-Path -LiteralPath $f)) { continue }
+	try { $j = Get-Content -LiteralPath $f -Raw -Encoding utf8 | ConvertFrom-Json } catch { continue }
+	$n = @($j.entries).Count
+	$total += $n
+	"data\{0}.json 现有 {1} 篇" -f $m, $n
+}
+if ($total -eq 0) {
+	"提醒：两边的数据都还是空的，先确认浏览器里点过「导出」并且文件落在下载目录。"
+}

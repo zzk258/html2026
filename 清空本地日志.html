@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>清空本地日志草稿 · ZZK</title>
+<style>
+	* { box-sizing: border-box; }
+	body {
+		margin: 0;
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #f4f6fb;
+		color: #1f2937;
+		font: 14px/1.7 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+		padding: 24px;
+	}
+	.card {
+		width: 100%;
+		max-width: 460px;
+		background: #fff;
+		border: 1px solid #e5e9f2;
+		border-radius: 14px;
+		padding: 26px 26px 22px;
+		box-shadow: 0 10px 30px rgba(23, 43, 77, .08);
+	}
+	h1 { font-size: 18px; margin: 0 0 6px; }
+	.sub { color: #6b7280; margin: 0 0 18px; }
+	.state {
+		background: #f7f9fc;
+		border: 1px dashed #d8dee9;
+		border-radius: 10px;
+		padding: 12px 14px;
+		margin-bottom: 18px;
+		font-family: Consolas, "Courier New", monospace;
+		font-size: 13px;
+		white-space: pre-wrap;
+	}
+	button {
+		width: 100%;
+		border: 0;
+		border-radius: 10px;
+		padding: 12px;
+		font-size: 15px;
+		font-weight: 600;
+		color: #fff;
+		background: #dc2626;
+		cursor: pointer;
+	}
+	button:disabled { background: #c9ced6; cursor: default; }
+	.link {
+		display: block;
+		margin-top: 14px;
+		text-align: center;
+		color: #2563eb;
+		text-decoration: none;
+	}
+	.note { color: #9aa3af; font-size: 12px; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="card">
+	<h1>清空本地日志草稿</h1>
+	<p class="sub">只清这台浏览器里未发布的草稿，不会动仓库里的 <code>data/*.json</code> 和附件。</p>
+	<div class="state" id="state">正在读取…</div>
+	<button id="clear" type="button">清空</button>
+	<a class="link" href="index.html">清完回首页重写</a>
+	<p class="note">草稿是按浏览器、按访问地址分开存的：在 file:// 清掉，不影响线上站点里的那份。</p>
+</div>
+<script>
+(function () {
+	var PREFIX = 'zzk.log.';
+	var stateEl = document.getElementById('state');
+	var btn = document.getElementById('clear');
+
+	function keys() {
+		var out = [];
+		try {
+			for (var i = 0; i < localStorage.length; i++) {
+				var k = localStorage.key(i);
+				if (k && k.indexOf(PREFIX) === 0) out.push(k);
+			}
+		} catch (e) {}
+		return out;
+	}
+
+	function report(extra) {
+		var list = keys();
+		var posts = list.filter(function (k) { return k.indexOf('.del') < 0; });
+		var dels = list.filter(function (k) { return k.indexOf('.del') >= 0; });
+		stateEl.textContent = (extra ? extra + '\n\n' : '')
+			+ '当前草稿键：' + posts.length + ' 个\n'
+			+ '墓碑记录：' + dels.length + ' 个\n'
+			+ '访问地址：' + location.href;
+		btn.disabled = list.length === 0;
+		btn.textContent = list.length ? '清空这 ' + list.length + ' 条记录' : '已经是干净的';
+	}
+
+	btn.addEventListener('click', function () {
+		var removed = 0;
+		keys().forEach(function (k) {
+			try { localStorage.removeItem(k); removed++; } catch (e) {}
+		});
+		var done = '已删除 ' + removed + ' 条';
+		try {
+			if (window.indexedDB && indexedDB.deleteDatabase) {
+				var req = indexedDB.deleteDatabase('lb-fs');
+				req.onsuccess = req.onerror = req.onblocked = function () { report(done); };
+			} else {
+				report(done);
+			}
+		} catch (e) {
+			report(done);
+		}
+		report(done);
+	});
+
+	report('');
+})();
+</script>
+</body>
+</html>
