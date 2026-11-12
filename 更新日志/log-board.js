@@ -171,9 +171,13 @@
 		return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
 	}
 
-	/* 只放行组件自己产生的图片 dataURL，避免导入的 JSON 里写入恶意地址 */
+	/* 只放行组件自己产生的图片 dataURL，以及仓库内的相对图片路径，避免导入的 JSON 里写入恶意地址 */
 	function safeImg(src) {
-		return typeof src === 'string' && /^data:image\/(png|jpeg|jpg|gif|webp|bmp);base64,/i.test(src) ? src : '';
+		if (typeof src !== 'string' || !src) return '';
+		if (/^data:image\/(png|jpeg|jpg|gif|webp|bmp);base64,/i.test(src)) return src;
+		// 仓库内相对路径：更新日志/files/... ；禁止协议前缀、绝对路径与上跳
+		if (/^[^:/\\]+(\/[^:/\\]+)*\.(png|jpe?g|gif|webp|bmp)$/i.test(src) && src.indexOf('..') < 0) return src;
+		return '';
 	}
 
 	/* ---------------- 正文渲染（轻量 Markdown） ---------------- */
@@ -594,6 +598,7 @@
 			title: opt.title,
 			seed: [],              // 仓库里已发布的内容（data/<id>.json）
 			seedLoaded: false,
+			seedLoading: location.protocol !== 'file:' && typeof fetch === 'function',
 			locals: readEntries(opt.id),   // 本浏览器写/改过的条目
 			entries: [],           // 合并后的展示数据
 			keyword: '',
@@ -745,8 +750,9 @@
 				</article>`;
 		}
 
-		function emptyHtml(searching) {
+		function emptyHtml(searching, loading) {
 			if (searching) return '<div class="lb-empty"><strong>没有匹配的日志</strong>换个关键词试试</div>';
+			if (loading) return '<div class="lb-empty"><strong>正在加载已发布的文章…</strong>首次打开需要下载文章列表，稍等一下</div>';
 			if (ONLINE_READONLY) return '<div class="lb-empty"><strong>还没有日志</strong>发布入口在本地：写完导出后双击「发布日志.bat」</div>';
 			return `<div class="lb-empty"><strong>还没有日志</strong>点击右上角「＋ 写日志」，用一篇文章介绍一个项目</div>`;
 		}
@@ -756,8 +762,11 @@
 			const shown = all.filter(matchEntry);
 			const kw = inst.keyword.trim();
 
-			els.count.textContent = kw ? `命中 ${shown.length} / 共 ${all.length} 篇` : `共 ${all.length} 篇`;
-			els.list.innerHTML = shown.length ? shown.map(cardHtml).join('') : emptyHtml(!!kw);
+			const loading = inst.seedLoading && !inst.seedLoaded && !all.length;
+			els.count.textContent = loading
+				? '加载中…'
+				: (kw ? `命中 ${shown.length} / 共 ${all.length} 篇` : `共 ${all.length} 篇`);
+			els.list.innerHTML = shown.length ? shown.map(cardHtml).join('') : emptyHtml(!!kw, loading);
 		}
 
 		/* ---------- 阅读页 ---------- */
@@ -1356,6 +1365,7 @@
 		fetchSeed(inst.id).then((seed) => {
 			inst.seed = seed || [];
 			inst.seedLoaded = true;
+			inst.seedLoading = false;
 			rebuild();
 			render();
 			if (inst.readerId) paintReader();

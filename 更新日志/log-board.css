@@ -232,7 +232,7 @@
 
 .lb-reader {
 	width: 100%;
-	max-width: 900px;
+	max-width: min(1180px, 94vw);
 	height: 94vh;
 	display: flex;
 	flex-direction: column;
@@ -270,7 +270,11 @@
 	padding: 0 0 48px;
 }
 
-.lb-reader-scroll > div { padding: 0 40px; }
+.lb-reader-scroll > div {
+	max-width: 980px;
+	margin: 0 auto;
+	padding: 0 clamp(24px, 5vw, 64px);
+}
 
 .lb-reader-cover {
 	display: block;

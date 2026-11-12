@@ -81,8 +81,10 @@
 - 「导出」生成 `<id>.json`（例如 `net.json`），内容 = 当前看到的全部条目（含本地草稿），
   直接覆盖 `更新日志/data/<id>.json` 就是一次发布
 - 「导入」读取同格式 JSON（也接受纯数组），按 `id` 合并进本地；换电脑时用它恢复
-- 数据里带的是压缩后的图片 dataURL，所以文件会比较大（几篇带图的就能到几 MB），
-  提交前留意仓库体积
+- 图片有两种存法：浏览器里新加的图会压成 dataURL 内嵌进 JSON；仓库里已有的封面图
+  存成独立文件（`更新日志/files/covers/*.jpg`），JSON 里只写相对路径。
+  后者让 JSON 从 1.4MB 降到约 50KB，首屏只加载看得见的那几张封面。
+  示例：`"images": ["更新日志/files/covers/capture.jpg"]`
 
 ## 推到 GitHub Pages（最短流程）
 
@@ -166,8 +168,13 @@ powershell -ExecutionPolicy Bypass -File .\更新日志\清理附件.ps1 -Apply
 
 ## 图片地址安全
 
-只接收组件自己生成的 `data:image/...;base64,` 开头的图片；导入的 JSON 里若混入
-`http://`、`javascript:` 等地址会被丢弃，避免把恶意链接当图片渲染。
+接收两种图片地址：
+
+- 组件自己生成的 `data:image/...;base64,`
+- 仓库内相对路径（如 `更新日志/files/covers/capture.jpg`），必须是以图片扩展名结尾、
+  不含协议前缀、不含 `..` 的纯相对路径
+
+导入的 JSON 里若混入 `http://`、`javascript:`、`//` 等地址会被丢弃，避免把恶意链接当图片渲染。
 正文链接只放行 `http(s)://`、`mailto:` 和 `#`。
 
 ## 主页里是怎么接的
