@@ -2210,7 +2210,7 @@ window.__dcEchartsReady = function () {
 /* ------------------------- 17. 初始化 ------------------------- */
 function init() {
   bindEvents();
-  if (!ECHARTS_OK) toast('图表引擎加载失败，请检查网络');
+  if (!ECHARTS_OK) toast('图表引擎加载中，稍等几秒图表会自动出现');
   applyDataset(buildDataset(TEMPLATES[0]));
   const hash = (location.hash || '').replace('#', '');
   const [v, param] = hash.split('/');
