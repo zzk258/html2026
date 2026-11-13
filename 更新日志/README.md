@@ -10,8 +10,7 @@
 | --- | --- |
 | `log-board.js` | 组件主体，暴露全局 `LogBoard.mount()` |
 | `log-board.css` | 组件样式，配色复用 `home.css` 的 `--c-primary` 等变量 |
-| `data/net.json` | 网络模块的已发布日志（`id=net`） |
-| `data/ops.json` | 运维模块的已发布日志（`id=ops`） |
+| `data/notes.json` | 随记·博文（网络 + 运维合并）的已发布内容（`id=notes`） |
 | `files/<日志ID>/` | 附件实体文件，一篇日志一个子目录 |
 | `本地预览.js` | 本地 `localhost` 服务（附件自动写入、读取 data JSON 都需要安全上下文） |
 | `清理附件.ps1` | 删日志后清理不再被引用的附件（默认预览，`-Apply` 才删） |
@@ -24,9 +23,9 @@
 <script src="更新日志/log-board.js"></script>
 <script>
   const board = LogBoard.mount(document.querySelector('#myLogs'), {
-    id: 'net',                    // 必填：存储键后缀，不同模块用不同 id 即数据隔离
-    title: '网络日志',
-    desc: '用一篇文章介绍一个网络项目：背景、做法、结果',
+    id: 'notes',                  // 必填：存储键后缀，不同模块用不同 id 即数据隔离
+    title: '随记·博文',
+    desc: '网络与运维的随手记录：一次故障、一次变更、一个做法',
     tags: ['项目介绍', '网络', '交换机', '故障处理']   // 标签输入框的候选词
   });
   board.count();    // 当前篇数
@@ -78,7 +77,7 @@
 
 ## 导入 / 导出
 
-- 「导出」生成 `<id>.json`（例如 `net.json`），内容 = 当前看到的全部条目（含本地草稿），
+- 「导出」生成 `<id>.json`（例如 `notes.json`），内容 = 当前看到的全部条目（含本地草稿），
   直接覆盖 `更新日志/data/<id>.json` 就是一次发布
 - 「导入」读取同格式 JSON（也接受纯数组），按 `id` 合并进本地；换电脑时用它恢复
 - 图片有两种存法：浏览器里新加的图会压成 dataURL 内嵌进 JSON；仓库里已有的封面图
@@ -89,7 +88,7 @@
 ## 推到 GitHub Pages（最短流程）
 
 1. 在写日志的页面点「导出」，文件落到下载目录（每个模块各导一次）
-2. 双击项目根目录的 `发布日志.bat`：自动把下载目录最新的 `net*.json` / `ops*.json`
+2. 双击项目根目录的 `发布日志.bat`：自动把下载目录最新的 `notes*.json`
    覆盖进 `data/`，再 `git add -A` → `git commit`（信息带时间）→ `git push`
 3. 等 1 分钟，刷新 `https://zzk258.github.io/html2026/`
 
@@ -179,13 +178,13 @@ powershell -ExecutionPolicy Bypass -File .\更新日志\清理附件.ps1 -Apply
 
 ## 主页里是怎么接的
 
-`home.html` 顶栏三个项目按钮（`data-module="front|net|ops"`），媒体区里
-`.lb-slot[data-slot="net"]`、`.lb-slot[data-slot="ops"]` 各是一个日志面板插槽：
+`home.html` 顶栏两个项目按钮（`data-module="front|notes"`），媒体区里
+`.lb-slot[data-slot="notes"]` 是博文面板插槽：
 
-1. 点按钮 → `home.js` 的 `setModule()` 给 `body` 加 `module-net` / `module-ops`
-2. CSS 按 `body` 类决定显示哪块：前端是侧栏 + iframe，网络/运维是对应插槽
+1. 点按钮 → `home.js` 的 `setModule()` 给 `body` 加 `module-notes`
+2. CSS 按 `body` 类决定显示哪块：项目是侧栏 + iframe，随记是博文插槽
 3. 第一次进入某模块才 `LogBoard.mount()` 并缓存实例，来回切换不重渲染、不丢数据
-4. 打开主页默认 `module-front`（前端），不记忆上次模块
+4. 打开主页默认 `module-front`（项目），不记忆上次模块
 
 要再加一个项目（比如「存储」），只需：顶栏加
 `<button class="module-btn" data-module="storage">存储</button>`、媒体区加

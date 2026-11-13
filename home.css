@@ -298,22 +298,16 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 
 /* 模块可见性：同一套 DOM 靠 body 类切换，避免重复渲染 */
 body.module-front .log-stage { display: none; }
-body.module-net .front-stage,
-body.module-ops .front-stage { display: none; }
+body.module-notes .front-stage { display: none; }
 
-body.module-net .sidebar,
-body.module-ops .sidebar { display: none; }
+body.module-notes .sidebar { display: none; }
 
-body.module-net .layout,
-body.module-ops .layout { grid-template-columns: 1fr; }
+body.module-notes .layout { grid-template-columns: 1fr; }
 
-body.module-net .search,
-body.module-ops .search,
-body.module-net .topbar-meta,
-body.module-ops .topbar-meta { display: none; }
+body.module-notes .search,
+body.module-notes .topbar-meta { display: none; }
 
-body.module-net .lb-slot[data-slot="net"],
-body.module-ops .lb-slot[data-slot="ops"] { display: flex; }
+body.module-notes .lb-slot[data-slot="notes"] { display: flex; }
 
 .stage-bar {
 	display: flex;

@@ -1,4 +1,4 @@
-﻿# 把浏览器「导出」下载到的 net*.json / ops*.json，同步进 更新日志/data/
+﻿# 把浏览器「导出」下载到的 notes*.json，同步进 更新日志/data/
 # 由 发布日志.bat 在提交前自动调用；也可单独运行：
 #   powershell -ExecutionPolicy Bypass -File .\更新日志\同步导出.ps1 -DryRun
 param(
@@ -24,8 +24,7 @@ $marker = Join-Path $here ".sync-ok"
 if (Test-Path -LiteralPath $marker) { Remove-Item -LiteralPath $marker -Force }
 
 $targets = @(
-	@{ Module = 'net'; Pattern = 'net*.json' },
-	@{ Module = 'ops'; Pattern = 'ops*.json' }
+	@{ Module = 'notes'; Pattern = 'notes*.json' }
 )
 
 foreach ($t in $targets) {
@@ -70,7 +69,7 @@ foreach ($t in $targets) {
 	"已同步 {0}：{1} -> data\{0}.json（{2} 篇）" -f $t.Module, $src.Name, $entries.Count
 }
 $total = 0
-foreach ($m in @('net', 'ops')) {
+foreach ($m in @('notes')) {
 	$f = Join-Path $dataDir ($m + '.json')
 	if (-not (Test-Path -LiteralPath $f)) { continue }
 	try { $j = Get-Content -LiteralPath $f -Raw -Encoding utf8 | ConvertFrom-Json } catch { continue }
@@ -79,7 +78,7 @@ foreach ($m in @('net', 'ops')) {
 	"data\{0}.json 现有 {1} 篇" -f $m, $n
 }
 if ($total -eq 0) {
-	"提醒：两边的数据都还是空的，先确认浏览器里点过「导出」并且文件落在下载目录。"
+	"提醒：随记·博文的数据还是空的，先确认浏览器里点过「导出」并且文件落在下载目录。"
 }
 
 if ($copied -gt 0) {

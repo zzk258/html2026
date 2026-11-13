@@ -1,9 +1,9 @@
 /* ============================================================
-   home.js — 工作台主页（项目案例 / 网络博文 / 运维博文）
+   home.js — 工作台主页（项目案例 / 随记·博文）
    设计要点：
    1. 唯一数据源 DATA —— 侧栏列表与预览均由它渲染
-   2. 三个项目模块（项目 / 网络 / 运维）由顶栏切换，项目为默认
-   3. 网络 / 运维 的图文内容交给「更新日志」组件（LogBoard）托管
+   2. 两个项目模块（项目 / 随记）由顶栏切换，项目为默认
+   3. 随记·博文（网络 + 运维）交给「更新日志」组件（LogBoard）托管
    4. 事件委托 + hash 记忆 + 新窗口打开 + iframe 刷新
    ============================================================ */
 
@@ -61,24 +61,32 @@ const DATA = [
 	}
 ];
 
-/* ---------------- 模块：前端 / 网络 / 运维 ---------------- */
-const MODULE_IDS = ['front', 'net', 'ops'];
+/* ---------------- 模块：项目 / 随记 ---------------- */
+const MODULE_IDS = ['front', 'notes'];
 
-/* 网络、运维各自的日志面板配置（存储键 = id） */
+/* 随记·博文：网络 + 运维合成一个版块，数据在 data/notes.json */
 const LOG_MODULES = {
-	net: {
-		id: 'net',
-		title: '网络博文',
-		desc: '用一篇文章介绍一个网络项目：背景、做法、结果',
-		tags: ['项目介绍', '网络', '交换机', '出口链路', '故障处理', '配置变更']
-	},
-	ops: {
-		id: 'ops',
-		title: '运维博文',
-		desc: '用一篇文章介绍一个运维项目：变更、巡检与复盘',
-		tags: ['项目介绍', '运维', '部署发布', '巡检', '备份恢复', '故障处理']
+	notes: {
+		id: 'notes',
+		title: '随记·博文',
+		desc: '网络与运维的随手记录：一次故障、一次变更、一个做法',
+		tags: ['项目介绍', '网络', '运维', '故障处理', '配置变更', '日常巡检', '部署发布', '备份恢复']
 	}
 };
+
+/* 老的 net / ops 草稿迁到 notes 一次，避免本地写过的东西切版块后消失 */
+function migrateNotesLocals() {
+	try {
+		const prefix = (window.LogBoard && window.LogBoard.STORAGE_PREFIX) || 'zzk.log.';
+		const key = prefix + 'notes';
+		if (localStorage.getItem(key)) return;
+		const legacy = ((window.LogBoard.read('net') || []).concat(window.LogBoard.read('ops') || []));
+		if (!legacy.length) return;
+		localStorage.setItem(key, JSON.stringify(legacy));
+	} catch (e) {
+		/* 迁移失败不影响使用 */
+	}
+}
 
 /* ---------------- 工具 ---------------- */
 const $ = (sel) => document.querySelector(sel);
@@ -186,7 +194,7 @@ function loadPreview(catId, index, { loadFrame = true, updateHash = true } = {})
 	} catch (_) { /* 隐私模式忽略 */ }
 }
 
-/* ---------------- 模块切换（前端 / 网络 / 运维） ---------------- */
+/* ---------------- 模块切换（项目 / 随记） ---------------- */
 const logBoards = {};   // 已挂载的日志面板，切换模块时复用，避免重复渲染
 
 function getLogBoard(modId) {
@@ -200,6 +208,7 @@ function getLogBoard(modId) {
 		return null;
 	}
 
+	if (modId === 'notes') migrateNotesLocals();
 	logBoards[modId] = window.LogBoard.mount(slot, LOG_MODULES[modId]);
 	return logBoards[modId];
 }
@@ -216,7 +225,7 @@ function setModule(id) {
 
 	state.module = target;
 
-	// 第一次进入网络 / 运维时才挂载日志面板
+	// 第一次进入「随记」时才挂载博文面板
 	if (target !== 'front') getLogBoard(target);
 }
 
