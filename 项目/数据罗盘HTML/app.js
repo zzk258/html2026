@@ -6,6 +6,11 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
+/* 图表引擎可能晚到：先给出等价的普通渐变对象，echarts 到位后再生成真正的 LinearGradient */
+function gradient(x, y, x2, y2, stops) {
+  if (window.echarts && window.echarts.graphic) return new window.echarts.graphic.LinearGradient(x, y, x2, y2, stops);
+  return { type: 'linear', x, y, x2, y2, colorStops: stops };
+}
 const PALETTE = ['#4f46e5', '#06b6d4', '#f59e0b', '#ec4899', '#10b981', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#6366f1'];
 const FONT = 'system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
 
@@ -589,17 +594,20 @@ function syncAggDefault() {
 }
 
 /* ------------------------- 6. ECharts 基础设施 ------------------------- */
-const ECHARTS_OK = typeof window.echarts !== 'undefined';
+let ECHARTS_OK = typeof window.echarts !== 'undefined';
 
 function mount(id, option) {
   const el = document.getElementById(id);
   if (!el) return null;
   if (!ECHARTS_OK) {
-    el.innerHTML = '<div class="empty">图表引擎未加载，请检查网络连接后刷新页面</div>';
+    el.innerHTML = '<div class="empty">图表引擎加载中…（首次打开需下载图表库，稍等几秒）</div>';
     return null;
   }
   let inst = window.echarts.getInstanceByDom(el);
-  if (!inst) inst = window.echarts.init(el, null, { renderer: 'canvas' });
+  if (!inst) {
+    el.innerHTML = '';                     // 清掉"加载中"占位再初始化
+    inst = window.echarts.init(el, null, { renderer: 'canvas' });
+  }
   inst.setOption(option, true);
   state.charts.set(id, inst);
   return inst;
@@ -1138,7 +1146,7 @@ function chartOption() {
       series.barMaxWidth = defs.length > 3 ? 14 : 34;
       series.itemStyle = {
         borderRadius: isHBar ? [0, 5, 5, 0] : [5, 5, 0, 0],
-        color: new window.echarts.graphic.LinearGradient(
+        color: gradient(
           isHBar ? 0 : 0, isHBar ? 0 : 0, isHBar ? 1 : 0, isHBar ? 0 : 1,
           [{ offset: 0, color: hexA(color, .95) }, { offset: 1, color: hexA(color, .62) }]
         )
@@ -1151,7 +1159,7 @@ function chartOption() {
       series.itemStyle = { color, borderColor: '#fff', borderWidth: 1.5 };
       if (type === 'area' || defs.length === 1) {
         series.areaStyle = {
-          color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          color: gradient(0, 0, 0, 1, [
             { offset: 0, color: hexA(color, .26) },
             { offset: 1, color: hexA(color, .01) }
           ])
@@ -1257,7 +1265,7 @@ function renderOverview() {
       lineStyle: { width: 2.8, color },
       itemStyle: { color, borderColor: '#fff', borderWidth: 2 },
       areaStyle: {
-        color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        color: gradient(0, 0, 0, 1, [
           { offset: 0, color: hexA(color, .3) },
           { offset: 1, color: hexA(color, .01) }
         ])
@@ -1337,7 +1345,7 @@ function renderOverview() {
         barMaxWidth: 18,
         itemStyle: {
           borderRadius: [0, 4, 4, 0],
-          color: new window.echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          color: gradient(0, 0, 1, 0, [
             { offset: 0, color: 'rgba(79,70,229,.55)' },
             { offset: 1, color: 'rgba(79,70,229,1)' }
           ])
@@ -2187,6 +2195,17 @@ function bindEvents() {
     rt = setTimeout(resizeCharts, 150);
   });
 }
+
+/* ------------------------- 18. 图表引擎迟到加载 ------------------------- */
+/* echarts 异步加载完成后调用：置位标志并重画当前视图的图表 */
+window.__dcEchartsReady = function () {
+  if (!window.echarts) return;
+  ECHARTS_OK = true;
+  state.charts.forEach(inst => { try { inst.dispose(); } catch (e) { /* noop */ } });
+  state.charts.clear();
+  try { renderCurrentView(); } catch (e) { /* noop */ }
+  requestAnimationFrame(resizeCharts);
+};
 
 /* ------------------------- 17. 初始化 ------------------------- */
 function init() {
