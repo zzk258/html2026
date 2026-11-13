@@ -74,17 +74,21 @@ const LOG_MODULES = {
 	}
 };
 
-/* 老的 net / ops 草稿迁到 notes 一次，避免本地写过的东西切版块后消失 */
-function migrateNotesLocals() {
+/* 一次性清掉旧的 net / ops 痕迹：草稿、墓碑、已发布缓存全删，只留新版内容 */
+function purgeLegacyLogs() {
 	try {
+		const flag = 'zzk.reset.notes2026b';
+		if (localStorage.getItem(flag)) return;
 		const prefix = (window.LogBoard && window.LogBoard.STORAGE_PREFIX) || 'zzk.log.';
-		const key = prefix + 'notes';
-		if (localStorage.getItem(key)) return;
-		const legacy = ((window.LogBoard.read('net') || []).concat(window.LogBoard.read('ops') || []));
-		if (!legacy.length) return;
-		localStorage.setItem(key, JSON.stringify(legacy));
+		const cachePrefix = 'zzk.seed.';
+		['net', 'ops', 'notes'].forEach((m) => {
+			localStorage.removeItem(prefix + m);
+			localStorage.removeItem(prefix + m + '.del');
+			localStorage.removeItem(cachePrefix + m);
+		});
+		localStorage.setItem(flag, '1');
 	} catch (e) {
-		/* 迁移失败不影响使用 */
+		/* 本地存储不可用不影响阅读线上内容 */
 	}
 }
 
@@ -208,7 +212,7 @@ function getLogBoard(modId) {
 		return null;
 	}
 
-	if (modId === 'notes') migrateNotesLocals();
+	if (modId === 'notes') purgeLegacyLogs();
 	logBoards[modId] = window.LogBoard.mount(slot, LOG_MODULES[modId]);
 	return logBoards[modId];
 }
