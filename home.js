@@ -54,9 +54,10 @@ const DATA = [
 		name: '项目开发案例',
 		icon: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="3" y1="12" x2="21" y2="12"/></svg>',
 		items: [
-			{ name: '企业官网 · 蓝天IT服务', url: 'vue/website/index.html', desc: '单文件企业官网：IT 建设与运维维修服务展示，深蓝主题、锚点导航、咨询入口与响应式布局' },
-			{ name: '在线音乐播放器', url: 'vue/musicSeach/index.html', desc: '歌曲搜索 + 播放列表，支持搜索歌手/专辑、推荐榜单与响应式适配，桌面与移动端通用' },
-			{ name: '极简阅读器', url: 'vue/极简阅读器/index.html', desc: '本地导入 EPUB 电子书，支持拖拽打开、阅读进度记录、笔记面板与排版主题切换' }
+			{ name: '数据罗盘 · 经营看板', url: '项目/数据罗盘HTML/index.html', desc: '六大数据看板：指标卡、趋势图、区间筛选、行转列透视；ECharts 单页实现，含移动端适配' },
+			{ name: '企业官网 · 蓝天IT服务', url: '项目/website/index.html', desc: '单文件企业官网：IT 建设与运维维修服务展示，深蓝主题、锚点导航、咨询入口与响应式布局' },
+			{ name: '在线音乐播放器', url: '项目/musicSeach/index.html', desc: '歌曲搜索 + 播放列表，支持搜索歌手/专辑、推荐榜单与响应式适配，桌面与移动端通用' },
+			{ name: '极简阅读器', url: '项目/极简阅读器/index.html', desc: '本地导入 EPUB 电子书，支持拖拽打开、阅读进度记录、笔记面板与排版主题切换' }
 		]
 	}
 ];
