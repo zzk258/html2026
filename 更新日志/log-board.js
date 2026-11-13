@@ -790,6 +790,9 @@
 			if (searching) return '<div class="lb-empty"><strong>没有匹配的日志</strong>换个关键词试试</div>';
 			if (loading) return '<div class="lb-empty"><strong>正在加载已发布的文章…</strong>首次打开需要下载文章列表，稍等一下</div>';
 			if (ONLINE_READONLY) return '<div class="lb-empty"><strong>还没有日志</strong>发布入口在本地：写完导出后双击「发布日志.bat」</div>';
+			if (location.protocol === 'file:') {
+				return '<div class="lb-empty"><strong>双击打开读不到已发布文章</strong>file:// 没有 fetch，浏览器不允许读 更新日志/data/notes.json。请双击项目根目录的「本地预览.js」，用 http://localhost 打开本页，就能看到全部已发布文章；已发布内容在线上是安全的，不会被本地空列表覆盖。</div>';
+			}
 			return `<div class="lb-empty"><strong>还没有日志</strong>点击右上角「＋ 写日志」，用一篇文章介绍一个项目</div>`;
 		}
 

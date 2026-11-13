@@ -3,7 +3,8 @@
 #   powershell -ExecutionPolicy Bypass -File .\更新日志\同步导出.ps1 -DryRun
 param(
 	[string]$Downloads = (Join-Path $env:USERPROFILE 'Downloads'),
-	[switch]$DryRun
+	[switch]$DryRun,
+	[switch]$Force
 )
 
 $ErrorActionPreference = 'Stop'
@@ -56,6 +57,19 @@ foreach ($t in $targets) {
 	$entries = @($json.entries)
 	if ($entries.Count -eq 0) {
 		"跳过 {0}：{1} 里没有日志条目（导出后是空的话多半没点对模块）" -f $t.Module, $src.Name
+		continue
+	}
+
+	# 防呆：导出条数明显少于仓库里现有条数，视为"空导出"，不覆盖线上数据
+	$existCount = 0
+	if (Test-Path -LiteralPath $dest) {
+		try {
+			$oldJson = Get-Content -LiteralPath $dest -Raw -Encoding utf8 | ConvertFrom-Json -ErrorAction Stop
+			$existCount = @($oldJson.entries).Count
+		} catch { $existCount = 0 }
+	}
+	if (-not $Force -and $existCount -gt 0 -and ($entries.Count -lt 5 -or $entries.Count -lt [Math]::Ceiling($existCount / 2))) {
+		"跳过 {0}：导出的 {1} 只有 {2} 篇，仓库里现有 {3} 篇，疑似空导出或选错文件；确认要覆盖请加 -Force" -f $t.Module, $src.Name, $entries.Count, $existCount
 		continue
 	}
 

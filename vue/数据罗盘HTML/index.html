@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>数据罗盘 · 行业数据分析</title>
+<link rel="stylesheet" href="styles.css?v=3">
+<script src="echarts.min.js"></script>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M5 17V10M12 17V5M19 17v-4.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="brand-txt"><b>数据罗盘</b><span>DataCompass</span></div>
+  </div>
+
+  <nav class="nav" id="nav">
+    <button class="nav-item active" data-view="overview">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="3.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="3.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="3.5" y="13.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="13.5" y="13.5" width="7" height="7" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>
+      <span>概览</span>
+    </button>
+    <button class="nav-item" data-view="charts">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 20V4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 20h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><rect x="7" y="12" width="3.4" height="5" rx="1.2" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="7.5" width="3.4" height="9.5" rx="1.2" stroke="currentColor" stroke-width="1.7"/></svg>
+      <span>图表分析</span>
+    </button>
+    <button class="nav-item" data-view="pivot">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 9.5h17M9.5 9.5v10M15 9.5v10" stroke="currentColor" stroke-width="1.5"/></svg>
+      <span>数据透视</span>
+    </button>
+    <button class="nav-item" data-view="table">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 6.5h16M4 12h16M4 17.5h16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="8" cy="6.5" r="1.4" fill="currentColor"/><circle cx="8" cy="12" r="1.4" fill="currentColor"/><circle cx="8" cy="17.5" r="1.4" fill="currentColor"/><path d="M11 6.5h9M11 12h9M11 17.5h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      <span>明细数据</span>
+    </button>
+    <button class="nav-item" data-view="source">
+      <svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" stroke-width="1.7"/><path d="M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6" stroke="currentColor" stroke-width="1.7"/><path d="M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6" stroke="currentColor" stroke-width="1.7"/></svg>
+      <span>数据源</span>
+    </button>
+  </nav>
+
+  <div class="side-foot">
+    <div class="side-card">
+      <div class="side-card-t">行业模板库</div>
+      <div class="side-card-d">13 个行业 · 一键载入结构化示例数据</div>
+      <button class="btn soft sm" data-view="source">浏览模板</button>
+    </div>
+    <div class="side-meta">
+      <span class="live-dot"></span> 本地计算 · 数据不出设备
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="crumb">
+      <span class="ds-dot"></span>
+      <b id="top-ds-name">加载中…</b>
+      <span class="sep">/</span>
+      <span class="muted" id="top-ds-meta">—</span>
+    </div>
+    <div class="top-actions">
+      <button class="btn ghost sm" id="btn-import">导入数据</button>
+      <button class="btn primary sm" id="btn-export">导出 CSV</button>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- ================= 概览 ================= -->
+    <section class="view active" id="view-overview">
+      <div class="page-head">
+        <div>
+          <h1 id="ov-title">经营概览</h1>
+          <p class="muted" id="ov-sub">—</p>
+        </div>
+        <div class="head-actions">
+          <span class="range-group ov-range-group">
+            <select id="ov-range" class="sel" aria-label="时间范围"></select>
+            <span class="range-custom" id="ov-custom" hidden>
+              <input type="date" id="ov-start" class="date-input" aria-label="开始日期">
+              <span class="range-sep">至</span>
+              <input type="date" id="ov-end" class="date-input" aria-label="结束日期">
+              <span class="ctl-hint" id="ov-hit"></span>
+            </span>
+          </span>
+          <span class="chip ghost" id="ov-industry">—</span>
+          <span class="chip ghost" id="ov-time">—</span>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="kpi-grid"></div>
+
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="card-head">
+            <div><h3>趋势走势</h3><p class="muted" id="trend-sub">按时间维度聚合</p></div>
+            <span class="chip" id="trend-chip">—</span>
+          </div>
+          <div class="chart" id="chart-trend"></div>
+        </div>
+        <div class="card chart-card">
+          <div class="card-head">
+            <div><h3>结构占比</h3><p class="muted" id="share-sub">—</p></div>
+            <span class="chip" id="share-chip">—</span>
+          </div>
+          <div class="chart" id="chart-share"></div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card chart-card">
+          <div class="card-head">
+            <div><h3>排名对比</h3><p class="muted" id="top-sub">—</p></div>
+            <span class="chip" id="top-chip">TOP 6</span>
+          </div>
+          <div class="chart" id="chart-top"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div><h3>数据质量</h3><p class="muted">自动检查缺失与重复</p></div></div>
+          <div id="quality" class="quality"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 图表分析 ================= -->
+    <section class="view" id="view-charts">
+      <div class="page-head">
+        <div>
+          <h1>图表分析</h1>
+          <p class="muted">行维度 × 列维度拆分多序列，统计指标任选，11 种图表随时切换</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn ghost sm" id="btn-png">导出图片</button>
+        </div>
+      </div>
+
+      <div class="card controls">
+        <div class="ctl-row">
+          <span class="ctl-label">图表类型</span>
+          <div class="chips" id="type-chips"></div>
+        </div>
+        <div class="ctl-row">
+          <span class="ctl-label">行维度</span>
+          <select id="sel-x" class="sel"></select>
+          <span class="ctl-label">列维度</span>
+          <select id="sel-col" class="sel"></select>
+          <span class="ctl-label">统计指标</span>
+          <div class="col-picker" id="metric-picker">
+            <button class="btn ghost sm" id="btn-metrics" type="button">
+              <span id="metric-btn-text">—</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="col-pop" id="metric-pop"></div>
+          </div>
+          <span class="ctl-hint" id="col-hint">列维度用于拆分多序列</span>
+        </div>
+        <div class="ctl-row">
+          <span class="ctl-label">聚合方式</span>
+          <select id="sel-agg" class="sel">
+            <option value="sum">求和</option>
+            <option value="avg">平均值</option>
+            <option value="max">最大值</option>
+            <option value="min">最小值</option>
+            <option value="count">计数</option>
+          </select>
+          <span class="ctl-label">排序</span>
+          <select id="sel-sort" class="sel">
+            <option value="desc">降序</option>
+            <option value="asc">升序</option>
+            <option value="none">原始</option>
+          </select>
+          <span class="ctl-label">显示条数</span>
+          <select id="sel-top" class="sel">
+            <option value="6">TOP 6</option>
+            <option value="10" selected>TOP 10</option>
+            <option value="15">TOP 15</option>
+            <option value="999">全部</option>
+          </select>
+          <span class="range-group">
+            <span class="ctl-label" id="range-label">时间范围</span>
+            <select id="sel-range" class="sel"></select>
+            <span class="range-custom" id="range-custom" hidden>
+              <input type="date" id="range-start" class="date-input" aria-label="开始日期">
+              <span class="range-sep">至</span>
+              <input type="date" id="range-end" class="date-input" aria-label="结束日期">
+              <span class="ctl-hint" id="range-hit"></span>
+            </span>
+          </span>
+          <label class="sw"><input type="checkbox" id="chk-label" checked><span></span></label>
+          <span class="ctl-hint">数值标签</span>
+        </div>
+      </div>
+
+      <div class="rec-row" id="recs"></div>
+
+      <div class="card chart-card big">
+        <div class="card-head">
+          <div><h3 id="chart-title">图表</h3><p class="muted" id="chart-desc">—</p></div>
+          <span class="chip" id="chart-meta">—</span>
+        </div>
+        <div class="chart" id="chart-main"></div>
+      </div>
+    </section>
+
+    <!-- ================= 数据透视 ================= -->
+    <section class="view" id="view-pivot">
+      <div class="page-head">
+        <div>
+          <h1>数据透视</h1>
+          <p class="muted">行维度 × 列维度可选任意字段交叉汇总，数值自动热力着色</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn ghost sm" id="btn-pivot-csv">导出透视表</button>
+        </div>
+      </div>
+
+      <div class="card controls">
+        <div class="ctl-row">
+          <span class="ctl-label">行维度</span>
+          <select id="pv-row" class="sel"></select>
+          <span class="ctl-label">列维度</span>
+          <select id="pv-col" class="sel"></select>
+          <span class="ctl-label">值字段</span>
+          <select id="pv-val" class="sel"></select>
+          <span class="ctl-label">聚合</span>
+          <select id="pv-agg" class="sel">
+            <option value="sum">求和</option>
+            <option value="avg">平均值</option>
+            <option value="count">计数</option>
+            <option value="max">最大值</option>
+            <option value="min">最小值</option>
+          </select>
+          <span class="range-group">
+            <span class="ctl-label" id="pv-range-label">时间范围</span>
+            <select id="pv-range" class="sel"></select>
+            <span class="range-custom" id="pv-custom" hidden>
+              <input type="date" id="pv-start" class="date-input" aria-label="开始日期">
+              <span class="range-sep">至</span>
+              <input type="date" id="pv-end" class="date-input" aria-label="结束日期">
+              <span class="ctl-hint" id="pv-hit"></span>
+            </span>
+          </span>
+        </div>
+      </div>
+
+      <div class="card pad0">
+        <div class="pivot-scroll" id="pivot-wrap"></div>
+      </div>
+    </section>
+
+    <!-- ================= 明细数据 ================= -->
+    <section class="view" id="view-table">
+      <div class="page-head">
+        <div>
+          <h1>明细数据</h1>
+          <p class="muted" id="table-sub">—</p>
+        </div>
+        <div class="head-actions">
+          <button class="btn ghost sm" id="btn-table-csv">导出当前结果</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-toolbar">
+          <div class="search">
+            <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.5" stroke="currentColor" stroke-width="1.8"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input id="table-search" type="search" placeholder="搜索任意字段…">
+          </div>
+          <div class="spacer"></div>
+          <div class="col-picker" id="col-picker">
+            <button class="btn ghost sm" id="btn-cols">
+              列设置
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="m6 9 6 6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+            </button>
+            <div class="col-pop" id="col-pop"></div>
+          </div>
+          <select id="page-size" class="sel">
+            <option value="10">10 行/页</option>
+            <option value="20" selected>20 行/页</option>
+            <option value="50">50 行/页</option>
+            <option value="100">100 行/页</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table class="data-table" id="data-table"></table>
+        </div>
+        <div class="table-foot">
+          <span class="muted" id="table-count">—</span>
+          <div class="pager" id="pager"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 数据源 ================= -->
+    <section class="view" id="view-source">
+      <div class="page-head">
+        <div>
+          <h1>数据源</h1>
+          <p class="muted">选择行业模板，或导入你自己的表格（CSV / Excel / JSON）</p>
+        </div>
+      </div>
+
+      <div class="tabs" id="src-tabs">
+        <button class="tab active" data-tab="tpl">行业模板</button>
+        <button class="tab" data-tab="paste">粘贴数据</button>
+        <button class="tab" data-tab="upload">上传文件</button>
+        <button class="tab" data-tab="fields">字段设置</button>
+      </div>
+
+      <div class="tab-panel active" id="panel-tpl">
+        <div class="tpl-grid" id="tpl-grid"></div>
+      </div>
+
+      <div class="tab-panel" id="panel-paste">
+        <div class="card">
+          <div class="card-head"><div><h3>从表格粘贴</h3><p class="muted">支持从 Excel / 飞书 / 腾讯文档直接复制，自动识别分隔符</p></div></div>
+          <textarea id="paste-area" class="paste-area" spellcheck="false" placeholder="月份,渠道,销售额&#10;2025-01,天猫,382000&#10;2025-01,京东,241500&#10;2025-02,天猫,401200"></textarea>
+          <div class="paste-bar">
+            <label class="sw"><input type="checkbox" id="paste-header" checked><span></span></label>
+            <span class="ctl-hint">首行为表头</span>
+            <div class="spacer"></div>
+            <button class="btn primary sm" id="btn-parse-paste">解析并载入</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-upload">
+        <div class="card">
+          <div class="card-head"><div><h3>上传文件</h3><p class="muted">CSV / TSV / XLSX / XLS / JSON，最大 20MB，本地解析</p></div></div>
+          <div class="dropzone" id="dropzone">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 16V5m0 0L7.5 9.5M12 5l4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <p><b>点击选择文件</b> 或将文件拖到此处</p>
+            <span class="muted">CSV · Excel · JSON</span>
+            <input type="file" id="file-input" accept=".csv,.tsv,.txt,.xlsx,.xls,.json" hidden>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="panel-fields">
+        <div class="card">
+          <div class="card-head">
+            <div><h3>字段设置</h3><p class="muted">列名可直接修改；类型识别有误时可手动修正，全局分析口径同步更新</p></div>
+            <div class="head-btns">
+              <button class="btn ghost sm" id="btn-promote-header">首行设为表头</button>
+              <button class="btn ghost sm" id="btn-reset-fields">恢复自动识别</button>
+            </div>
+          </div>
+          <div class="field-list" id="field-list"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="app.js?v=6"></script>
+</body>
+</html>
