@@ -23,6 +23,8 @@ html { height: 100%; }
 
 body {
 	height: 100%;
+	display: flex;
+	flex-direction: column;
 	font-family: "PingFang SC", "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
 	background: var(--c-bg);
 	color: var(--c-text);
@@ -36,6 +38,7 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 
 /* ---------------- 顶栏 ---------------- */
 .topbar {
+	flex: 0 0 auto;
 	position: sticky;
 	top: 0;
 	z-index: 100;
@@ -142,9 +145,10 @@ button { font: inherit; cursor: pointer; border: none; background: none; color: 
 
 /* ---------------- 布局骨架 ---------------- */
 .layout {
+	flex: 1 1 auto;
+	min-height: 0;
 	display: grid;
 	grid-template-columns: 260px 1fr;
-	height: calc(100vh - var(--topbar-h));
 }
 
 /* ---------------- 侧栏 ---------------- */
@@ -411,25 +415,78 @@ body.module-notes .lb-slot[data-slot="notes"] { display: flex; }
 
 /* ---------------- 响应式 ---------------- */
 @media (max-width: 900px) {
+	/* 顶栏：品牌 + 切换一行，搜索独占一行 */
+	.topbar { height: auto; }
+	.topbar-inner {
+		flex-wrap: wrap;
+		gap: 8px;
+		padding: 8px 12px;
+	}
+	.brand { order: 1; }
+	.brand-logo { width: 30px; height: 30px; }
+	.brand-text strong { font-size: 14px; }
+	.brand-text span { display: none; }
+	.modules { order: 2; margin-left: auto; padding: 2px; }
+	.module-btn { height: 34px; padding: 0 13px; font-size: 13px; -webkit-tap-highlight-color: transparent; }
+	.search {
+		order: 3;
+		flex: 1 0 100%;
+		max-width: none;
+		height: 38px;
+		border-radius: 10px;
+	}
+	.search input { font-size: 16px; }        /* 16px 以下 iOS 会自动放大页面 */
 	.topbar-meta { display: none; }
-	.layout { grid-template-columns: 1fr; position: relative; }
 
+	/* 主体：单列，目录改成抽屉，不再压住预览 */
+	.layout { display: block; position: relative; }
 	.sidebar {
 		position: absolute;
 		inset: 0 auto 0 0;
-		width: 260px;
-		z-index: 50;
-		box-shadow: 4px 0 20px rgba(15, 23, 42, .12);
+		width: min(82vw, 300px);
+		z-index: 60;
+		transform: translateX(-102%);
 		margin-left: 0;
+		box-shadow: 8px 0 24px rgba(15, 23, 42, .18);
+		transition: transform .25s ease;
+		overscroll-behavior: contain;
 	}
-	.layout.nav-collapsed .sidebar { margin-left: -260px; }
+	.layout:not(.nav-collapsed) .sidebar { transform: translateX(0); }
+	.layout.nav-collapsed .sidebar { transform: translateX(-102%); margin-left: 0; }
 
+	/* 抽屉展开时的遮罩，点一下即可收起 */
+	.layout::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: 55;
+		background: rgba(15, 23, 42, .38);
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity .2s;
+	}
+	.layout:not(.nav-collapsed)::after { opacity: 1; pointer-events: auto; }
+
+	/* 目录：加大点按面积 */
+	.nav { padding: 10px 8px 16px; -webkit-overflow-scrolling: touch; }
+	.cat-head { padding: 13px 10px; font-size: 15px; }
+	.item { padding: 12px 12px; font-size: 14px; white-space: normal; }
+
+	.stage { height: 100%; padding: 8px; gap: 8px; }
 	.stage-info span { display: none; }
-	.stage { padding: 8px; gap: 8px; }
+	.stage-bar { padding: 6px 8px; }
+	.btn-icon { width: 38px; height: 38px; }
+	.btn { height: 38px; }
+	.stage-empty { padding: 0 24px; text-align: center; }
+
+	.sidebar-foot { display: none; }
 }
 
 @media (max-width: 560px) {
-	.brand-text span { display: none; }
-	.btn { padding: 0 9px; }
+	.topbar-inner { padding: 8px 10px; }
 	.btn .btn-text { display: none; }
+	.btn-icon { width: 40px; height: 40px; }
+	.module-btn { height: 36px; padding: 0 12px; }
+	.nav.cat .cat-head { padding: 12px 10px; }
+	.item { padding: 13px 12px; }
 }

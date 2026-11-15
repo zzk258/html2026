@@ -285,9 +285,23 @@ function bindEvents() {
 		ifr.src = ifr.src; // 重新赋值即重载（file:// 下无跨域限制问题）
 	});
 
-	// 侧栏收起 / 展开
+	// 侧栏收起 / 展开（手机上就是抽屉开关）
 	$('#btnMenu').addEventListener('click', () => {
 		document.querySelector('.layout').classList.toggle('nav-collapsed');
+	});
+
+	// 手机上点遮罩收起抽屉；选完案例也自动收起，把预览让出来
+	const layout = document.querySelector('.layout');
+	const isNarrow = () => !!(window.matchMedia && window.matchMedia('(max-width: 900px)').matches);
+	layout.addEventListener('click', (e) => {
+		if (!isNarrow()) return;
+		if (e.target.closest('#btnMenu')) return;      // 开关自己处理，别刚开就关
+		const inSidebar = e.target.closest('.sidebar');
+		if (!inSidebar) {
+			layout.classList.add('nav-collapsed');
+			return;
+		}
+		if (e.target.closest('.item')) layout.classList.add('nav-collapsed');
 	});
 
 	// hash 恢复（刷新页面保持当前案例）
@@ -305,6 +319,11 @@ function bindEvents() {
 function init() {
 	const total = DATA.reduce((n, c) => n + c.items.length, 0);
 	$('#statTotal').textContent = `共 ${total} 个案例`;
+
+	// 手机上目录是抽屉，默认收起，避免挡住预览
+	if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+		document.querySelector('.layout').classList.add('nav-collapsed');
+	}
 
 	// 打开主页默认停在前端模块
 	setModule('front');
