@@ -4,11 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>数据罗盘 · 行业数据分析</title>
-<link rel="stylesheet" href="styles.css?v=3">
-<link rel="preload" as="script" href="echarts.min.js?v=8">
-<link rel="preload" as="script" href="app.min.js?v=8">
-<script src="app.min.js?v=8" defer></script>
-<script src="echarts.min.js?v=8" async onload="window.__dcEchartsReady &amp;&amp; window.__dcEchartsReady()"></script>
+<link rel="stylesheet" href="styles.css?v=5">
+<script src="echarts.min.js"></script>
 </head>
 <body>
 
@@ -95,38 +92,19 @@
         </div>
       </div>
 
-      <div class="kpi-grid" id="kpi-grid"></div>
-
-      <div class="grid-2">
-        <div class="card chart-card">
-          <div class="card-head">
-            <div><h3>趋势走势</h3><p class="muted" id="trend-sub">按时间维度聚合</p></div>
-            <span class="chip" id="trend-chip">—</span>
-          </div>
-          <div class="chart" id="chart-trend"></div>
+      <div class="ov-toolbar">
+        <div class="ov-tb-left">
+          <span class="ov-edit-hint" id="ov-edit-hint" hidden>编辑中：拖动卡片调整顺序，⇔ 切换整行 / 半宽</span>
+          <span class="chip ghost" id="ov-widget-count">—</span>
         </div>
-        <div class="card chart-card">
-          <div class="card-head">
-            <div><h3>结构占比</h3><p class="muted" id="share-sub">—</p></div>
-            <span class="chip" id="share-chip">—</span>
-          </div>
-          <div class="chart" id="chart-share"></div>
+        <div class="ov-tb-right">
+          <button class="btn soft sm" id="btn-ov-add" title="去图表分析配置图表并添加到概览">＋ 添加图表</button>
+          <button class="btn ghost sm" id="btn-ov-edit">编辑布局</button>
+          <button class="btn ghost sm" id="btn-ov-reset">恢复默认</button>
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="card chart-card">
-          <div class="card-head">
-            <div><h3>排名对比</h3><p class="muted" id="top-sub">—</p></div>
-            <span class="chip" id="top-chip">TOP 6</span>
-          </div>
-          <div class="chart" id="chart-top"></div>
-        </div>
-        <div class="card">
-          <div class="card-head"><div><h3>数据质量</h3><p class="muted">自动检查缺失与重复</p></div></div>
-          <div id="quality" class="quality"></div>
-        </div>
-      </div>
+      <div class="ov-board" id="ov-board"></div>
     </section>
 
     <!-- ================= 图表分析 ================= -->
@@ -134,9 +112,10 @@
       <div class="page-head">
         <div>
           <h1>图表分析</h1>
-          <p class="muted">行维度 × 列维度拆分多序列，统计指标任选，11 种图表随时切换</p>
+          <p class="muted">行维度 × 列维度拆分多序列，统计指标任选，11 种图表随时切换；调好后可命名并添加到概览</p>
         </div>
         <div class="head-actions">
+          <button class="btn soft sm" id="btn-add-overview" title="把当前图表命名后添加到概览看板">＋ 添加到概览</button>
           <button class="btn ghost sm" id="btn-png">导出图片</button>
         </div>
       </div>
@@ -360,7 +339,22 @@
   </main>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="ov-modal" id="ov-modal" hidden>
+  <div class="ov-modal-card" role="dialog" aria-modal="true" aria-labelledby="ov-modal-title">
+    <h3 id="ov-modal-title">添加到概览</h3>
+    <p class="muted" id="ov-modal-desc">—</p>
+    <label class="ov-modal-label" for="ov-modal-input">图表名称</label>
+    <input id="ov-modal-input" class="ov-modal-input" maxlength="28" autocomplete="off" placeholder="给这个图表起个名字">
+    <div class="ov-modal-foot">
+      <button type="button" class="btn ghost sm" id="ov-modal-cancel">取消</button>
+      <button type="button" class="btn primary sm" id="ov-modal-ok">添加</button>
+    </div>
+  </div>
+</div>
 
+<div class="toast" id="toast"></div>
+<script src="app.js?v=8"></script>
 </body>
 </html>
+
+

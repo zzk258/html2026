@@ -6,11 +6,6 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-/* 图表引擎可能晚到：先给出等价的普通渐变对象，echarts 到位后再生成真正的 LinearGradient */
-function gradient(x, y, x2, y2, stops) {
-  if (window.echarts && window.echarts.graphic) return new window.echarts.graphic.LinearGradient(x, y, x2, y2, stops);
-  return { type: 'linear', x, y, x2, y2, colorStops: stops };
-}
 const PALETTE = ['#4f46e5', '#06b6d4', '#f59e0b', '#ec4899', '#10b981', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#6366f1'];
 const FONT = 'system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
 
@@ -565,7 +560,9 @@ const state = {
   pivot: { row: '', col: '', val: '', agg: 'sum' },
   table: { page: 1, size: 20, q: '', sort: null, dir: 'desc' },
   hidden: new Set(),
-  charts: new Map()
+  charts: new Map(),
+  /* 概览自定义看板：layout = [{ id, kind, span, metric }] */
+  ov: { layout: [], editing: false, built: false, seq: 1, dragId: '', modal: null }
 };
 
 const getField = key => (state.dataset ? state.dataset.fields.find(f => f.key === key) : undefined);
@@ -594,20 +591,17 @@ function syncAggDefault() {
 }
 
 /* ------------------------- 6. ECharts 基础设施 ------------------------- */
-let ECHARTS_OK = typeof window.echarts !== 'undefined';
+const ECHARTS_OK = typeof window.echarts !== 'undefined';
 
 function mount(id, option) {
   const el = document.getElementById(id);
   if (!el) return null;
   if (!ECHARTS_OK) {
-    el.innerHTML = '<div class="empty">图表引擎加载中…（首次打开需下载图表库，稍等几秒）</div>';
+    el.innerHTML = '<div class="empty">图表引擎未加载，请检查网络连接后刷新页面</div>';
     return null;
   }
   let inst = window.echarts.getInstanceByDom(el);
-  if (!inst) {
-    el.innerHTML = '';                     // 清掉"加载中"占位再初始化
-    inst = window.echarts.init(el, null, { renderer: 'canvas' });
-  }
+  if (!inst) inst = window.echarts.init(el, null, { renderer: 'canvas' });
   inst.setOption(option, true);
   state.charts.set(id, inst);
   return inst;
@@ -1146,7 +1140,7 @@ function chartOption() {
       series.barMaxWidth = defs.length > 3 ? 14 : 34;
       series.itemStyle = {
         borderRadius: isHBar ? [0, 5, 5, 0] : [5, 5, 0, 0],
-        color: gradient(
+        color: new window.echarts.graphic.LinearGradient(
           isHBar ? 0 : 0, isHBar ? 0 : 0, isHBar ? 1 : 0, isHBar ? 0 : 1,
           [{ offset: 0, color: hexA(color, .95) }, { offset: 1, color: hexA(color, .62) }]
         )
@@ -1159,7 +1153,7 @@ function chartOption() {
       series.itemStyle = { color, borderColor: '#fff', borderWidth: 1.5 };
       if (type === 'area' || defs.length === 1) {
         series.areaStyle = {
-          color: gradient(0, 0, 0, 1, [
+          color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [
             { offset: 0, color: hexA(color, .26) },
             { offset: 1, color: hexA(color, .01) }
           ])
@@ -1203,7 +1197,6 @@ function renderOverview() {
   const timeField = dates[0];
   const primary = pickPrimaryMetric();
   const rowsIn = applyGlobalRange(ds.rows);   // 概览同样遵循全局时间范围
-
   $('#ov-title').textContent = ds.name;
   $('#ov-sub').textContent = state.range.range === 'all'
     ? `${ds.rows.length} 条记录 · ${ds.fields.length} 个字段 · 本地实时计算`
@@ -1219,9 +1212,202 @@ function renderOverview() {
     syncCustomRange(state.range, { wrap: '#ov-custom', start: '#ov-start', end: '#ov-end', hit: '#ov-hit' });
   }
 
-  /* --- KPI --- */
+  /* --- 自定义看板 --- */
+  if (!state.ov.built) buildOvBoard();
+  else renderOvWidgets();
+  syncOvToolbar();
+}
+
+/* ------------------------- 9.5 概览自定义看板 ------------------------- */
+const OV_LS_KEY = 'datacompass.overview.layout.v1';
+
+const OV_WIDGET_DEFS = {
+  kpi:          { label: '核心指标',   desc: '关键指标卡片 + 迷你趋势',   icon: '📊', span: 2, metric: false },
+  trend:        { label: '趋势走势',   desc: '按时间聚合的单指标走势',     icon: '📈', span: 2, metric: true },
+  share:        { label: '结构占比',   desc: '分类维度的环形占比图',       icon: '🍩', span: 1, metric: true },
+  rank:         { label: '排名对比',   desc: '分类维度 TOP 6 条形对比',    icon: '🏆', span: 1, metric: true },
+  compare:      { label: '本期 vs 上期', desc: '最后两期分组柱状对比',     icon: '🔀', span: 1, metric: true },
+  heatmap:      { label: '维度热力图', desc: '分类 × 时间的数值热力',      icon: '🔥', span: 1, metric: true },
+  radar:        { label: '指标雷达',   desc: '多个指标的维度画像',         icon: '🕸️', span: 1, metric: false },
+  tabletop:     { label: '头部汇总表', desc: '维度汇总 TOP 8 与占比',      icon: '📋', span: 2, metric: true },
+  distribution: { label: '数值分布',   desc: '主指标分桶直方图',           icon: '📶', span: 1, metric: true },
+  treemap:      { label: '结构矩形树', desc: '用面积大小展示占比',         icon: '🧱', span: 1, metric: true },
+  quality:      { label: '数据质量',   desc: '缺失、重复与完整度检查',     icon: '✅', span: 1, metric: false },
+  custom:       { label: '自定义图表', desc: '图表分析中命名后添加的图表', icon: '✨', span: 2, metric: false }
+};
+
+/* 默认布局：保留原有的趋势 / 占比 / 排名 / 数据质量，并新增本期对比、热力图、汇总表、雷达 */
+const OV_DEFAULT_LAYOUT = [
+  { kind: 'kpi', span: 2 },
+  { kind: 'trend', span: 2 },
+  { kind: 'share', span: 1 },
+  { kind: 'rank', span: 1 },
+  { kind: 'compare', span: 1 },
+  { kind: 'heatmap', span: 1 },
+  { kind: 'tabletop', span: 2 },
+  { kind: 'radar', span: 1 },
+  { kind: 'quality', span: 1 }
+];
+
+function ovNormLayout(list) {
+  if (!Array.isArray(list)) return null;
+  const out = [];
+  list.forEach(item => {
+    if (!item || !OV_WIDGET_DEFS[item.kind]) return;
+    const chart = (item.chart && typeof item.chart === 'object' && typeof item.chart.type === 'string' && Array.isArray(item.chart.ys))
+      ? item.chart : null;
+    if (item.kind === 'custom' && !chart) return;
+    out.push({
+      id: 'w' + (state.ov.seq++),
+      kind: item.kind,
+      span: item.span === 2 ? 2 : 1,
+      metric: typeof item.metric === 'string' ? item.metric : '',
+      title: typeof item.title === 'string' ? item.title : '',
+      chart
+    });
+  });
+  if (list.length && !out.length) return null;
+  return out;
+}
+
+function loadOvLayout() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(OV_LS_KEY) || 'null'); } catch (e) { saved = null; }
+  const norm = Array.isArray(saved) ? ovNormLayout(saved) : null;
+  state.ov.layout = norm || ovNormLayout(OV_DEFAULT_LAYOUT);
+  const maxId = state.ov.layout.reduce((m, w) => Math.max(m, Number(String(w.id).slice(1)) || 0), 0);
+  state.ov.seq = maxId + 1;
+}
+
+function saveOvLayout() {
+  try {
+    localStorage.setItem(OV_LS_KEY, JSON.stringify(
+      state.ov.layout.map(w => ({
+        kind: w.kind, span: w.span, metric: w.metric || '', title: w.title || '', chart: w.chart || null
+      }))
+    ));
+  } catch (e) { /* 本地存储不可用时仅当前会话生效 */ }
+}
+
+function ovContext() {
+  const ds = state.dataset;
+  const rows = applyGlobalRange(ds.rows);
+  return { rows, dims: stringFields(), timeField: dateFields()[0], dataset: ds };
+}
+
+function ovMetricOf(w) {
+  const m = w.metric ? metricField(w.metric) : null;
+  return (m && m.type === 'number') ? m : pickPrimaryMetric();
+}
+
+function fillOvMetricSelect(sel, w) {
+  const cur = ovMetricOf(w);
+  sel.innerHTML = metricFields().map(f =>
+    `<option value="${esc(f.key)}" ${f.key === cur.key ? 'selected' : ''}>${esc(f.label)}</option>`
+  ).join('');
+}
+
+function disposeOvCharts() {
+  const ids = [];
+  state.charts.forEach((inst, id) => { if (id.indexOf('ovc-') === 0) ids.push(id); });
+  ids.forEach(id => {
+    const inst = state.charts.get(id);
+    if (inst) { try { inst.dispose(); } catch (e) { /* noop */ } }
+    state.charts.delete(id);
+  });
+}
+
+function ovWidgetHtml(w) {
+  const def = OV_WIDGET_DEFS[w.kind];
+  const title = w.title || def.label;
+  return `<article class="ov-widget ${w.span === 2 ? 'span-2' : ''}" data-wid="${w.id}" data-kind="${w.kind}" draggable="${state.ov.editing}">
+    <div class="ov-w-head">
+      <span class="ov-drag" title="按住拖动调整顺序">⠿</span>
+      <div class="ov-w-title"><h3 title="${esc(title)}">${esc(title)}</h3><p class="muted">—</p></div>
+      <div class="ov-w-aside">
+        <span class="ov-w-chip"></span>
+        ${def.metric ? `<select class="sel ov-w-metric" title="统计指标"></select>` : ''}
+      </div>
+      <div class="ov-w-ctl">
+        <button type="button" class="ov-ico" data-act="rename" title="重命名">✎</button>
+        <button type="button" class="ov-ico" data-act="span" title="切换整行 / 半宽">⇔</button>
+        <button type="button" class="ov-ico" data-act="up" title="上移">↑</button>
+        <button type="button" class="ov-ico" data-act="down" title="下移">↓</button>
+        <button type="button" class="ov-ico danger" data-act="del" title="删除模块">✕</button>
+      </div>
+    </div>
+    <div class="ov-w-body"></div>
+  </article>`;
+}
+
+function buildOvBoard() {
+  const board = $('#ov-board');
+  if (!board || !state.dataset) return;
+  disposeOvCharts();
+  board.innerHTML = state.ov.layout.length
+    ? state.ov.layout.map(ovWidgetHtml).join('')
+    : `<div class="ov-empty"><b>概览看板已清空</b><span>点击「添加图表」选择要展示的模块，或点「恢复默认」还原推荐布局。</span></div>`;
+  state.ov.built = true;
+  applyOvEditingState();
+  renderOvWidgets();
+  requestAnimationFrame(() => resizeCharts());
+}
+
+function renderOvWidgets() {
+  const board = $('#ov-board');
+  if (!board) return;
+  const ctx = ovContext();
+  $$('#ov-board .ov-widget').forEach(el => {
+    const w = state.ov.layout.find(x => x.id === el.dataset.wid);
+    if (w) renderOvWidget(el, w, ctx);
+  });
+  syncOvToolbar();
+}
+
+function renderOvWidget(el, w, ctx) {
+  const def = OV_WIDGET_DEFS[w.kind];
+  const ui = {
+    body: el.querySelector('.ov-w-body'),
+    sub: el.querySelector('.ov-w-title p'),
+    chip: el.querySelector('.ov-w-chip'),
+    metricSel: el.querySelector('.ov-w-metric')
+  };
+  if (!ui.body) return;
+  if (!ctx) ctx = ovContext();
+  ui.sub.textContent = '';
+  ui.chip.textContent = '';
+  ui.chip.className = 'ov-w-chip';
+
+  if (ui.metricSel) {
+    fillOvMetricSelect(ui.metricSel, w);
+    ui.metricSel.onchange = () => {
+      w.metric = ui.metricSel.value;
+      saveOvLayout();
+      renderOvWidget(el, w);
+    };
+  }
+
+  try {
+    const fn = OV_RENDERERS[w.kind] || ovRenderTrend;
+    fn(el, w, ctx, ui);
+  } catch (err) {
+    console.error(err);
+    ui.body.innerHTML = `<div class="ov-empty-sm">该模块渲染失败：${esc(err.message || err)}</div>`;
+  }
+}
+
+function ovMountChart(w, ui, option) {
+  const id = 'ovc-' + w.id;
+  const prev = state.charts.get(id);
+  if (prev) { try { prev.dispose(); } catch (e) { /* noop */ } state.charts.delete(id); }
+  ui.body.innerHTML = `<div class="chart ov-chart" id="${id}"></div>`;
+  mount(id, option);
+}
+
+/* ---------- 各模块渲染 ---------- */
+function kpiCardsHtml(rowsIn) {
   const kpis = pickKpis().length ? pickKpis() : [COUNT_METRIC];
-  $('#kpi-grid').innerHTML = kpis.map((f, i) => {
+  return kpis.map(f => {
     const aggFn = aggForMetric(f);
     const total = aggregate(rowsIn, f.key, aggFn);
     const series = metricSeries(f, aggFn, rowsIn);
@@ -1248,118 +1434,716 @@ function renderOverview() {
         </div>
       </div>`;
   }).join('');
+}
 
-  /* --- 趋势 --- */
-  const trendMetric = primary;
-  if (timeField && trendMetric) {
-    const s = metricSeries(trendMetric, aggForMetric(trendMetric), rowsIn);
-    const opt = baseOption();
-    opt.grid = { left: 8, right: 16, top: 26, bottom: 6, containLabel: true };
-    opt.legend = { show: false };
-    opt.xAxis = { ...catAxis(), data: s.labels, boundaryGap: false };
-    opt.yAxis = valAxis([trendMetric]);
-    const color = PALETTE[0];
-    opt.series = [{
-      type: 'line', name: trendMetric.label, data: s.values,
-      smooth: .35, symbol: 'circle', symbolSize: 5.5,
-      lineStyle: { width: 2.8, color },
-      itemStyle: { color, borderColor: '#fff', borderWidth: 2 },
-      areaStyle: {
-        color: gradient(0, 0, 0, 1, [
-          { offset: 0, color: hexA(color, .3) },
-          { offset: 1, color: hexA(color, .01) }
+function ovRenderKpi(el, w, ctx, ui) {
+  const kpis = pickKpis().length ? pickKpis() : [COUNT_METRIC];
+  ui.body.innerHTML = `<div class="kpi-grid ov-kpi-grid">${kpiCardsHtml(ctx.rows)}</div>`;
+  ui.sub.textContent = '核心指标 · 与上期比较';
+  ui.chip.textContent = `${kpis.length} 项指标`;
+}
+
+function ovRenderTrend(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  if (!ctx.timeField) {
+    ui.sub.textContent = '需要时间字段';
+    ui.body.innerHTML = '<div class="ov-empty-sm">缺少时间字段，无法生成趋势走势</div>';
+    return;
+  }
+  const s = metricSeries(m, aggForMetric(m), ctx.rows);
+  const opt = baseOption();
+  opt.grid = { left: 8, right: 26, top: 26, bottom: 6, containLabel: true };
+  opt.legend = { show: false };
+  opt.xAxis = { ...catAxis(), data: s.labels, boundaryGap: false };
+  opt.yAxis = valAxis([m]);
+  const color = PALETTE[0];
+  opt.series = [{
+    type: 'line', name: m.label, data: s.values,
+    smooth: .35, symbol: 'circle', symbolSize: 5.5,
+    lineStyle: { width: 2.8, color },
+    itemStyle: { color, borderColor: '#fff', borderWidth: 2 },
+    areaStyle: {
+      color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [
+        { offset: 0, color: hexA(color, .3) },
+        { offset: 1, color: hexA(color, .01) }
+      ])
+    }
+  }];
+  ovMountChart(w, ui, opt);
+  ui.sub.textContent = `${ctx.timeField.label} · ${m.label}`;
+  const growth = s.values.length > 1 && s.values[0]
+    ? (s.values[s.values.length - 1] - s.values[0]) / Math.abs(s.values[0]) * 100 : null;
+  ui.chip.textContent = growth === null ? '—' : `累计 ${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`;
+}
+
+function ovRenderShare(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  const dim = ctx.dims.find(d => d.key !== state.chart.x) || ctx.dims[0];
+  if (!dim) {
+    ui.sub.textContent = '需要分类维度';
+    ui.body.innerHTML = '<div class="ov-empty-sm">缺少分类字段，无法生成占比图</div>';
+    return;
+  }
+  const g = groupRows(ctx.rows, dim.key);
+  const data = Array.from(g.keys())
+    .map(k => ({ name: k, value: aggregate(g.get(k), m.key, aggForMetric(m)) }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 8);
+  const total = data.reduce((a, b) => a + b.value, 0) || 1;
+  ovMountChart(w, ui, {
+    color: PALETTE,
+    textStyle: { fontFamily: FONT },
+    tooltip: {
+      trigger: 'item', backgroundColor: 'rgba(15,23,42,.93)', borderWidth: 0,
+      padding: [9, 13], textStyle: { color: '#e2e8f0', fontSize: 12, fontFamily: FONT },
+      formatter: p => `${p.name}<br/><b>${fmt(p.value, m)}</b> · ${(p.value / total * 100).toFixed(1)}%`
+    },
+    legend: { bottom: 0, left: 'center', icon: 'circle', itemWidth: 7, itemHeight: 7, itemGap: 10, textStyle: { color: '#7b8598', fontSize: 11 } },
+    series: [{
+      type: 'pie',
+      radius: ['44%', '66%'],
+      center: ['50%', '44%'],
+      itemStyle: { borderColor: '#fff', borderWidth: 2.5, borderRadius: 5 },
+      label: { show: false },
+      emphasis: { label: { show: true, fontSize: 13, fontWeight: 600, formatter: p => `${p.name}\n${p.percent}%` } },
+      data
+    }]
+  });
+  ui.sub.textContent = `${dim.label} · ${m.label}`;
+  ui.chip.textContent = `${data.length} 类`;
+}
+
+function ovRenderRank(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  const dim = ctx.dims[0];
+  if (!dim) {
+    ui.sub.textContent = '需要分类维度';
+    ui.body.innerHTML = '<div class="ov-empty-sm">缺少分类字段，无法生成排名</div>';
+    return;
+  }
+  const g = groupRows(ctx.rows, dim.key);
+  const data = Array.from(g.keys())
+    .map(k => ({ name: k, value: aggregate(g.get(k), m.key, aggForMetric(m)) }))
+    .sort((a, b) => a.value - b.value)
+    .slice(-6);
+  ovMountChart(w, ui, {
+    color: [PALETTE[0]],
+    textStyle: { fontFamily: FONT },
+    tooltip: {
+      trigger: 'axis', axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(79,70,229,.06)' } },
+      backgroundColor: 'rgba(15,23,42,.93)', borderWidth: 0, padding: [9, 13],
+      textStyle: { color: '#e2e8f0', fontSize: 12, fontFamily: FONT },
+      formatter: p => `${p[0].name}<br/><b>${fmt(p[0].value, m)}</b>`
+    },
+    grid: { left: 8, right: 52, top: 8, bottom: 6, containLabel: true },
+    xAxis: { type: 'value', splitLine: { lineStyle: { color: '#f1f4f9' } }, axisLabel: { color: '#a3abbd', fontSize: 10.5, formatter: v => fmtAxis(v) } },
+    yAxis: { type: 'category', data: data.map(d => d.name), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#5c6779', fontSize: 11.5 } },
+    series: [{
+      type: 'bar',
+      data: data.map(d => d.value),
+      barMaxWidth: 18,
+      itemStyle: {
+        borderRadius: [0, 4, 4, 0],
+        color: new window.echarts.graphic.LinearGradient(0, 0, 1, 0, [
+          { offset: 0, color: 'rgba(79,70,229,.55)' },
+          { offset: 1, color: 'rgba(79,70,229,1)' }
         ])
+      },
+      label: { show: true, position: 'right', fontSize: 10.5, color: '#7b8598', formatter: p => fmtAxis(p.value) }
+    }]
+  });
+  ui.sub.textContent = `${dim.label} · ${m.label}`;
+  ui.chip.textContent = `TOP ${data.length}`;
+}
+
+/* 把数据切成「上期 / 本期」：优先用时间字段的最后两期，没有时间字段时按前后半段 */
+function ovSplitPeriods(ctx) {
+  if (ctx.timeField) {
+    const tk = ctx.timeField.key;
+    const keyOf = r => { const d = toDay(r[tk]); return d ? d.slice(0, 7) : ''; };
+    const keys = Array.from(new Set(ctx.rows.map(keyOf).filter(Boolean))).sort();
+    if (keys.length >= 2) {
+      const cur = keys[keys.length - 1], prev = keys[keys.length - 2];
+      return {
+        curName: cur, prevName: prev,
+        curRows: ctx.rows.filter(r => keyOf(r) === cur),
+        prevRows: ctx.rows.filter(r => keyOf(r) === prev)
+      };
+    }
+  }
+  const half = Math.ceil(ctx.rows.length / 2);
+  return {
+    curName: '后半段', prevName: '前半段',
+    curRows: ctx.rows.slice(ctx.rows.length - half),
+    prevRows: ctx.rows.slice(0, ctx.rows.length - half)
+  };
+}
+
+function ovRenderCompare(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  const dim = ctx.dims[0];
+  if (!dim || ctx.rows.length < 2) {
+    ui.sub.textContent = '需要分类维度';
+    ui.body.innerHTML = '<div class="ov-empty-sm">缺少分类维度或数据太少，无法对比</div>';
+    return;
+  }
+  const p = ovSplitPeriods(ctx);
+  const aggFn = aggForMetric(m);
+  const curMap = groupRows(p.curRows, dim.key);
+  const prevMap = groupRows(p.prevRows, dim.key);
+  const keys = Array.from(new Set([...curMap.keys(), ...prevMap.keys()]));
+  const rows = keys.map(k => ({
+    k,
+    cur: aggregate(curMap.get(k) || [], m.key, aggFn),
+    prev: aggregate(prevMap.get(k) || [], m.key, aggFn)
+  })).sort((a, b) => b.cur - a.cur).slice(0, 6).reverse();
+
+  const opt = baseOption();
+  opt.grid = { left: 8, right: 12, top: 34, bottom: 6, containLabel: true };
+  opt.legend = { show: true, top: 0, right: 0, icon: 'roundRect', itemWidth: 9, itemHeight: 9, itemGap: 10, textStyle: { color: '#64748b', fontSize: 11 } };
+  opt.tooltip.formatter = arr => `${arr[0].name}<br/>` + arr.map(a => `${a.marker}${a.seriesName}：<b>${fmt(a.value, m)}</b>`).join('<br/>');
+  opt.xAxis = { ...catAxis(), data: rows.map(r => r.k), boundaryGap: true };
+  opt.yAxis = valAxis([m]);
+  opt.series = [
+    { name: p.prevName, type: 'bar', data: rows.map(r => r.prev), barMaxWidth: 13, itemStyle: { color: '#cbd5e1', borderRadius: [3, 3, 0, 0] } },
+    { name: p.curName, type: 'bar', data: rows.map(r => r.cur), barMaxWidth: 13, itemStyle: { color: PALETTE[0], borderRadius: [3, 3, 0, 0] } }
+  ];
+  ovMountChart(w, ui, opt);
+  ui.sub.textContent = `${dim.label} · ${m.label}`;
+  ui.chip.textContent = `${p.prevName} → ${p.curName}`;
+}
+
+function ovRenderHeatmap(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  const dim = ctx.dims[0];
+  if (!dim || !ctx.timeField) {
+    ui.sub.textContent = '需要时间与分类维度';
+    ui.body.innerHTML = '<div class="ov-empty-sm">需要时间字段和分类维度才能生成热力图</div>';
+    return;
+  }
+  const tk = ctx.timeField.key;
+  const days = Array.from(new Set(ctx.rows.map(r => toDay(r[tk])).filter(Boolean))).sort();
+  let keyOf = r => toDay(r[tk]).slice(0, 7);
+  let xKeys = Array.from(new Set(days.map(d => d.slice(0, 7))));
+  if (xKeys.length < 2) { xKeys = days; keyOf = r => toDay(r[tk]); }
+  xKeys = xKeys.slice(-14);
+
+  const g = groupRows(ctx.rows, dim.key);
+  const yKeys = Array.from(g.keys())
+    .map(k => ({ k, v: aggregate(g.get(k), m.key, aggForMetric(m)) }))
+    .sort((a, b) => b.v - a.v).slice(0, 8).map(o => o.k);
+  const xs = new Map(xKeys.map((k, i) => [k, i]));
+  const ys = new Map(yKeys.map((k, i) => [k, i]));
+  const cells = [];
+  const sums = new Map();
+  ctx.rows.forEach(r => {
+    const x = keyOf(r); const y = (r[dim.key] === null || r[dim.key] === undefined || r[dim.key] === '') ? '未分类' : String(r[dim.key]);
+    const xi = xs.get(x), yi = ys.get(y);
+    if (xi === undefined || yi === undefined) return;
+    const key = xi + ':' + yi;
+    const cell = sums.get(key) || { v: [], n: 0 };
+    const v = toNum(r[m.key]);
+    if (isFinite(v)) { cell.v.push(v); }
+    sums.set(key, cell);
+  });
+  let maxVal = 0;
+  sums.forEach(cell => {
+    const v = cell.v.reduce((a, b) => a + b, 0);
+    if (v > maxVal) maxVal = v;
+  });
+  sums.forEach((cell, key) => {
+    if (!cell.v.length) return;
+    const [xi, yi] = key.split(':').map(Number);
+    const v = cell.v.reduce((a, b) => a + b, 0);
+    cells.push([xi, yi, v]);
+  });
+
+  ovMountChart(w, ui, {
+    textStyle: { fontFamily: FONT },
+    tooltip: {
+      position: 'top', backgroundColor: 'rgba(15,23,42,.93)', borderWidth: 0, padding: [9, 13],
+      textStyle: { color: '#e2e8f0', fontSize: 12, fontFamily: FONT },
+      formatter: prm => `${yKeys[prm.data[1]]} · ${xKeys[prm.data[0]]}<br/><b>${fmt(prm.data[2], m)}</b>`
+    },
+    grid: { left: 8, right: 12, top: 10, bottom: 42, containLabel: true },
+    xAxis: { type: 'category', data: xKeys, splitArea: { show: true }, axisLine: { lineStyle: { color: '#e6eaf2' } }, axisTick: { show: false }, axisLabel: { color: '#8a94a6', fontSize: 10.5, hideOverlap: true } },
+    yAxis: { type: 'category', data: yKeys, splitArea: { show: true }, axisLine: { lineStyle: { color: '#e6eaf2' } }, axisTick: { show: false }, axisLabel: { color: '#5c6779', fontSize: 11 } },
+    visualMap: {
+      min: 0, max: maxVal || 1, calculable: false, orient: 'horizontal', left: 'center', bottom: 0,
+      itemWidth: 110, itemHeight: 10, textStyle: { color: '#a3abbd', fontSize: 10.5 },
+      inRange: { color: ['#eef0fb', '#c9c9f4', '#918bea', '#4f46e5'] }
+    },
+    series: [{
+      type: 'heatmap', data: cells,
+      itemStyle: { borderRadius: 3, borderColor: '#fff', borderWidth: 1.5 },
+      emphasis: { itemStyle: { shadowBlur: 6, shadowColor: 'rgba(79,70,229,.35)' } }
+    }]
+  });
+  ui.sub.textContent = `${dim.label} × ${ctx.timeField.label}`;
+  ui.chip.textContent = `${xKeys.length} 期`;
+}
+
+function ovRenderRadar(el, w, ctx, ui) {
+  const metrics = numberFields().slice(0, 5);
+  const dim = ctx.dims[0];
+  if (metrics.length < 2 || !dim) {
+    ui.sub.textContent = '需要两个以上数值指标';
+    ui.body.innerHTML = '<div class="ov-empty-sm">至少需要 2 个数值指标和 1 个分类维度</div>';
+    return;
+  }
+  const g = groupRows(ctx.rows, dim.key);
+  const groups = Array.from(g.keys()).map(k => ({
+    name: k,
+    rows: g.get(k),
+    values: metrics.map(f => aggregate(g.get(k), f.key, aggForMetric(f)))
+  })).sort((a, b) => b.values[0] - a.values[0]).slice(0, 5);
+  const maxes = metrics.map((f, i) => {
+    const mx = Math.max(...groups.map(o => o.values[i]));
+    return mx > 0 ? mx : 1;
+  });
+  ovMountChart(w, ui, {
+    color: PALETTE,
+    textStyle: { fontFamily: FONT },
+    tooltip: {
+      trigger: 'item', backgroundColor: 'rgba(15,23,42,.93)', borderWidth: 0, padding: [9, 13],
+      textStyle: { color: '#e2e8f0', fontSize: 12, fontFamily: FONT },
+      formatter: p => {
+        const vals = p.value || [];
+        return `<b>${p.name}</b><br/>` + metrics.map((f, i) => `${esc(f.label)}：${fmtAxis(vals[i])}`).join('<br/>');
       }
-    }];
-    mount('chart-trend', opt);
-    $('#trend-sub').textContent = `${timeField.label} · ${trendMetric.label}`;
-    const growth = s.values.length > 1 && s.values[0]
-      ? (s.values[s.values.length - 1] - s.values[0]) / Math.abs(s.values[0]) * 100 : null;
-    $('#trend-chip').textContent = growth === null ? '—' : `累计 ${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%`;
-    $('#trend-chip').className = 'chip ' + (growth === null ? '' : growth >= 0 ? 'accent' : 'accent');
-  } else {
-    mount('chart-trend', emptyOption('缺少时间或数值字段，无法生成趋势'));
-    $('#trend-sub').textContent = '需要时间字段';
-    $('#trend-chip').textContent = '—';
-  }
+    },
+    legend: { bottom: 0, left: 'center', type: 'scroll', icon: 'circle', itemWidth: 7, itemHeight: 7, itemGap: 9, textStyle: { color: '#7b8598', fontSize: 10.5 } },
+    radar: {
+      indicator: metrics.map((f, i) => ({ name: f.label, max: maxes[i] * 1.08 })),
+      radius: '58%', center: ['50%', '46%'], splitNumber: 4,
+      axisName: { color: '#5c6779', fontSize: 10.5 },
+      splitLine: { lineStyle: { color: '#eef1f8' } },
+      splitArea: { areaStyle: { color: ['#fff', '#fbfcff'] } }
+    },
+    series: [{
+      type: 'radar',
+      symbolSize: 4,
+      data: groups.map((o, i) => ({
+        name: o.name,
+        value: o.values,
+        lineStyle: { width: 1.7, color: PALETTE[i % PALETTE.length] },
+        areaStyle: { opacity: .14, color: PALETTE[i % PALETTE.length] }
+      }))
+    }]
+  });
+  ui.sub.textContent = `${dim.label} · ${metrics.length} 个指标`;
+  ui.chip.textContent = `TOP ${groups.length}`;
+}
 
-  /* --- 结构占比 --- */
-  const shareDim = dims.find(d => d.key !== state.chart.x) || dims[0];
-  if (shareDim && primary) {
-    const g = groupRows(rowsIn, shareDim.key);
-    const data = Array.from(g.keys())
-      .map(k => ({ name: k, value: aggregate(g.get(k), primary.key, aggForMetric(primary)) }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8);
-    const total = data.reduce((a, b) => a + b.value, 0);
-    mount('chart-share', {
-      color: PALETTE,
-      textStyle: { fontFamily: FONT },
-      tooltip: {
-        trigger: 'item', backgroundColor: 'rgba(15,23,42,.93)', borderWidth: 0,
-        padding: [9, 13], textStyle: { color: '#e2e8f0', fontSize: 12, fontFamily: FONT },
-        formatter: p => `${p.name}<br/><b>${fmt(p.value, primary)}</b> · ${(p.value / total * 100).toFixed(1)}%`
+function ovRenderTabletop(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  const dim = ctx.dims[0];
+  if (!dim) {
+    ui.sub.textContent = '需要分类维度';
+    ui.body.innerHTML = '<div class="ov-empty-sm">缺少分类维度，无法生成汇总表</div>';
+    return;
+  }
+  const g = groupRows(ctx.rows, dim.key);
+  const all = Array.from(g.keys()).map(k => ({
+    k, rows: g.get(k).length,
+    value: aggregate(g.get(k), m.key, aggForMetric(m))
+  })).sort((a, b) => b.value - a.value);
+  const total = all.reduce((s, o) => s + o.value, 0) || 1;
+  const list = all.slice(0, 8);
+
+  ui.body.innerHTML = `<div class="ov-mini-table">
+    <div class="ov-mt-head"><span>#</span><span>${esc(dim.label)}</span><span>${esc(m.label)}</span><span>占比</span></div>
+    ${list.map((o, i) => {
+      const share = Math.max(0, Math.min(100, o.value / total * 100));
+      return `<div class="ov-mt-row">
+        <span class="ov-mt-rank ${i < 3 ? 'top' : ''}">${i + 1}</span>
+        <span class="ov-mt-name" title="${esc(o.k)}">${esc(o.k)}</span>
+        <span class="ov-mt-val">${esc(fmt(o.value, m))}</span>
+        <span class="ov-mt-share"><i style="width:${share.toFixed(1)}%"></i><em>${share.toFixed(1)}%</em></span>
+      </div>`;
+    }).join('')}
+  </div>`;
+  ui.sub.textContent = `${dim.label} · ${m.label} · 共 ${all.length} 项`;
+  ui.chip.textContent = `TOP ${list.length}`;
+}
+
+function ovRenderDistribution(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  const vals = ctx.rows.map(r => r[m.key])
+    .map(v => (typeof v === 'number' ? v : toNum(v)))
+    .filter(v => isFinite(v));
+  if (!vals.length) {
+    ui.sub.textContent = '需要数值字段';
+    ui.body.innerHTML = '<div class="ov-empty-sm">当前范围内没有有效的数值</div>';
+    return;
+  }
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const buckets = 8;
+  const step = (max - min) / buckets || 1;
+  const counts = new Array(buckets).fill(0);
+  vals.forEach(v => {
+    let i = Math.floor((v - min) / step);
+    if (i >= buckets) i = buckets - 1;
+    if (i < 0) i = 0;
+    counts[i]++;
+  });
+  const labels = counts.map((_, i) => {
+    const a = min + step * i;
+    const b = i === buckets - 1 ? max : min + step * (i + 1);
+    return `${fmtAxis(a)}~${fmtAxis(b)}`;
+  });
+  const opt = baseOption();
+  opt.grid = { left: 8, right: 12, top: 18, bottom: 6, containLabel: true };
+  opt.legend = { show: false };
+  opt.xAxis = { ...catAxis(), data: labels, axisLabel: { color: '#8a94a6', fontSize: 10, interval: 0, rotate: labels.length > 6 ? 28 : 0, hideOverlap: false } };
+  opt.yAxis = valAxis(null);
+  opt.tooltip.trigger = 'axis';
+  opt.tooltip.formatter = p => `${p[0].name}<br/><b>${p[0].value} 个</b>`;
+  opt.series = [{
+    type: 'bar', name: m.label, data: counts, barWidth: '58%',
+    itemStyle: { color: new window.echarts.graphic.LinearGradient(0, 0, 0, 1, [
+      { offset: 0, color: hexA(PALETTE[1], .95) },
+      { offset: 1, color: hexA(PALETTE[1], .55) }
+    ]), borderRadius: [4, 4, 0, 0] }
+  }];
+  ovMountChart(w, ui, opt);
+  ui.sub.textContent = `${m.label} · ${vals.length} 个有效值`;
+  ui.chip.textContent = `${fmtAxis(min)} ~ ${fmtAxis(max)}`;
+}
+
+function ovRenderTreemap(el, w, ctx, ui) {
+  const m = ovMetricOf(w);
+  const dim = ctx.dims[0];
+  if (!dim) {
+    ui.sub.textContent = '需要分类维度';
+    ui.body.innerHTML = '<div class="ov-empty-sm">缺少分类维度，无法生成矩形树图</div>';
+    return;
+  }
+  const g = groupRows(ctx.rows, dim.key);
+  const data = Array.from(g.keys()).map(k => ({
+    name: k, value: Math.max(0, aggregate(g.get(k), m.key, aggForMetric(m)))
+  })).sort((a, b) => b.value - a.value).slice(0, 10);
+  ovMountChart(w, ui, {
+    textStyle: { fontFamily: FONT },
+    tooltip: {
+      backgroundColor: 'rgba(15,23,42,.93)', borderWidth: 0, padding: [9, 13],
+      textStyle: { color: '#e2e8f0', fontSize: 12, fontFamily: FONT },
+      formatter: p => `${p.name}<br/><b>${fmt(p.value, m)}</b>`
+    },
+    series: [{
+      type: 'treemap', roam: false, nodeClick: false, breadcrumb: { show: false },
+      width: '100%', height: '94%', top: 0,
+      itemStyle: { borderColor: '#fff', borderWidth: 2, gapWidth: 2, borderRadius: 5 },
+      label: {
+        show: true, color: '#fff', fontSize: 11, lineHeight: 15,
+        formatter: p => `${p.name}\n${fmtAxis(p.value)}`,
+        textShadowBlur: 2, textShadowColor: 'rgba(0,0,0,.25)'
       },
-      legend: { bottom: 0, left: 'center', icon: 'circle', itemWidth: 7, itemHeight: 7, itemGap: 10, textStyle: { color: '#7b8598', fontSize: 11 } },
-      series: [{
-        type: 'pie',
-        radius: ['44%', '66%'],
-        center: ['50%', '44%'],
-        itemStyle: { borderColor: '#fff', borderWidth: 2.5, borderRadius: 5 },
-        label: { show: false },
-        emphasis: { label: { show: true, fontSize: 13, fontWeight: 600, formatter: p => `${p.name}\n${p.percent}%` } },
-        data
-      }]
-    });
-    $('#share-sub').textContent = `${shareDim.label} · ${primary.label}`;
-    $('#share-chip').textContent = `${data.length} 类`;
-  } else {
-    mount('chart-share', emptyOption('缺少分类字段'));
-    $('#share-sub').textContent = '需要分类维度';
-    $('#share-chip').textContent = '—';
+      data: data.map((d, i) => ({ ...d, itemStyle: { color: PALETTE[i % PALETTE.length] } }))
+    }]
+  });
+  ui.sub.textContent = `${dim.label} · ${m.label}`;
+  ui.chip.textContent = `${data.length} 块`;
+}
+
+function ovRenderQuality(el, w, ctx, ui) {
+  const q = qualityStats();
+  ui.body.innerHTML = `<div class="quality">${q.html}</div>`;
+  ui.sub.textContent = '缺失 · 重复 · 完整度';
+  ui.chip.textContent = `完整度 ${q.completeness.toFixed(1)}%`;
+}
+
+/* ---------- 图表分析里保存过来的自定义图表 ---------- */
+function chartTypeLabel(type) {
+  return (CHART_TYPES.find(t => t.id === type) || {}).label || '图表';
+}
+
+function chartConfigDesc(cfg) {
+  const xf = getField(cfg.x);
+  const colF = cfg.col ? getField(cfg.col) : null;
+  const mfs = (cfg.ys || []).map(metricField).filter(Boolean);
+  if (!xf || !mfs.length) return '字段已失效';
+  const aggLabel = mfs.some(isCount) ? '记录数'
+    : ({ sum: '求和', avg: '平均', max: '最大', min: '最小', count: '计数' })[cfg.agg] || '求和';
+  return `${mfs.map(f => f.label).join(' + ')} 按 ${xf.label}${colF ? ` × ${colF.label}` : ''} 分组 · ${aggLabel}`;
+}
+
+function ovRenderCustom(el, w, ctx, ui) {
+  const cfg = w.chart;
+  const xf = cfg ? getField(cfg.x) : null;
+  const mfs = cfg ? (cfg.ys || []).map(metricField).filter(Boolean) : [];
+  if (!cfg || !xf || !mfs.length) {
+    ui.sub.textContent = '字段或图表配置已失效';
+    ui.body.innerHTML = `<div class="ov-empty-sm">这张图表依赖的字段在当前数据里不存在，可删除本模块，或到「图表分析」重新调好后再次添加</div>`;
+    return;
   }
 
-  /* --- 排名 --- */
-  const rankDim = dims[0];
-  if (rankDim && primary) {
-    const g = groupRows(rowsIn, rankDim.key);
-    const data = Array.from(g.keys())
-      .map(k => ({ name: k, value: aggregate(g.get(k), primary.key, aggForMetric(primary)) }))
-      .sort((a, b) => a.value - b.value)
-      .slice(-6);
-    mount('chart-top', {
-      color: [PALETTE[0]],
-      textStyle: { fontFamily: FONT },
-      tooltip: {
-        trigger: 'axis', axisPointer: { type: 'shadow', shadowStyle: { color: 'rgba(79,70,229,.06)' } },
-        backgroundColor: 'rgba(15,23,42,.93)', borderWidth: 0, padding: [9, 13],
-        textStyle: { color: '#e2e8f0', fontSize: 12, fontFamily: FONT },
-        formatter: p => `${p[0].name}<br/><b>${fmt(p[0].value, primary)}</b>`
-      },
-      grid: { left: 8, right: 52, top: 8, bottom: 6, containLabel: true },
-      xAxis: { type: 'value', splitLine: { lineStyle: { color: '#f1f4f9' } }, axisLabel: { color: '#a3abbd', fontSize: 10.5, formatter: v => fmtAxis(v) } },
-      yAxis: { type: 'category', data: data.map(d => d.name), axisLine: { show: false }, axisTick: { show: false }, axisLabel: { color: '#5c6779', fontSize: 11.5 } },
-      series: [{
-        type: 'bar',
-        data: data.map(d => d.value),
-        barMaxWidth: 18,
-        itemStyle: {
-          borderRadius: [0, 4, 4, 0],
-          color: gradient(0, 0, 1, 0, [
-            { offset: 0, color: 'rgba(79,70,229,.55)' },
-            { offset: 1, color: 'rgba(79,70,229,1)' }
-          ])
-        },
-        label: { show: true, position: 'right', fontSize: 10.5, color: '#7b8598', formatter: p => fmtAxis(p.value) }
-      }]
-    });
-    $('#top-sub').textContent = `${rankDim.label} · ${primary.label}`;
-  } else {
-    mount('chart-top', emptyOption('缺少排名维度'));
-    $('#top-sub').textContent = '需要分类维度';
-  }
+  /* 临时套用该模块自己的图表配置，复用图表分析同一套渲染逻辑 */
+  const backup = { ...state.chart, ys: [...state.chart.ys] };
+  Object.keys(state.chart).forEach(k => delete state.chart[k]);
+  Object.assign(state.chart, {
+    type: cfg.type,
+    x: cfg.x,
+    col: cfg.col || '',
+    ys: [...(cfg.ys || [])],
+    agg: cfg.agg || 'sum',
+    sort: cfg.sort || 'desc',
+    topN: Number(cfg.topN) > 0 ? Number(cfg.topN) : 10,
+    showLabel: cfg.showLabel !== false
+  });
 
-  renderQuality();
+  let opt;
+  try {
+    opt = chartOption();
+  } finally {
+    Object.keys(state.chart).forEach(k => delete state.chart[k]);
+    Object.assign(state.chart, backup);
+  }
+  ovMountChart(w, ui, opt);
+  ui.sub.textContent = chartConfigDesc(cfg);
+  ui.chip.textContent = chartTypeLabel(cfg.type);
+}
+
+const OV_RENDERERS = {
+  kpi: ovRenderKpi,
+  trend: ovRenderTrend,
+  share: ovRenderShare,
+  rank: ovRenderRank,
+  compare: ovRenderCompare,
+  heatmap: ovRenderHeatmap,
+  radar: ovRenderRadar,
+  tabletop: ovRenderTabletop,
+  distribution: ovRenderDistribution,
+  treemap: ovRenderTreemap,
+  quality: ovRenderQuality,
+  custom: ovRenderCustom
+};
+
+/* ---------- 看板交互 ---------- */
+function syncOvToolbar() {
+  const count = $('#ov-widget-count');
+  if (count) count.textContent = `${state.ov.layout.length} 个模块`;
+}
+
+function applyOvEditingState() {
+  const board = $('#ov-board');
+  if (board) board.classList.toggle('editing', !!state.ov.editing);
+  $$('#ov-board .ov-widget').forEach(el => el.setAttribute('draggable', state.ov.editing ? 'true' : 'false'));
+  const hint = $('#ov-edit-hint');
+  if (hint) hint.hidden = !state.ov.editing;
+  const btn = $('#btn-ov-edit');
+  if (btn) {
+    btn.textContent = state.ov.editing ? '完成编辑' : '编辑布局';
+    btn.classList.toggle('soft', !!state.ov.editing);
+    btn.classList.toggle('ghost', !state.ov.editing);
+  }
+}
+
+function setOvEditing(on) {
+  state.ov.editing = !!on;
+  applyOvEditingState();
+  if (!on) {
+    state.ov.dragId = '';
+    $$('#ov-board .ov-widget').forEach(el => el.classList.remove('dragging'));
+    requestAnimationFrame(() => resizeCharts());
+  }
+}
+
+/* ---------- 从「图表分析」命名后添加到概览 ---------- */
+function defaultChartName() {
+  const c = state.chart;
+  const parts = [chartTypeLabel(c.type)];
+  const xf = getField(c.x);
+  const mfs = c.ys.map(metricField).filter(Boolean);
+  if (xf) parts.push(xf.label);
+  if (mfs.length) parts.push(mfs.map(f => f.label).join('+'));
+  return parts.join(' · ').slice(0, 28);
+}
+
+function openOvNameModal({ heading, desc, value, okText, onOk }) {
+  const modal = $('#ov-modal');
+  if (!modal) return;
+  state.ov.modal = { onOk };
+  $('#ov-modal-title').textContent = heading;
+  $('#ov-modal-desc').textContent = desc || '';
+  $('#ov-modal-ok').textContent = okText || '添加';
+  const input = $('#ov-modal-input');
+  input.value = value || '';
+  modal.hidden = false;
+  requestAnimationFrame(() => { input.focus(); input.select(); });
+}
+
+function closeOvNameModal() {
+  const modal = $('#ov-modal');
+  if (modal) modal.hidden = true;
+  state.ov.modal = null;
+}
+
+function confirmOvNameModal() {
+  if (!state.ov.modal) return;
+  const input = $('#ov-modal-input');
+  const name = (input.value || '').trim().slice(0, 28);
+  const action = state.ov.modal.onOk;
+  if (!name) { input.focus(); return; }
+  closeOvNameModal();
+  action(name);
+}
+
+function addChartToOverview(name) {
+  const c = state.chart;
+  const cfg = {
+    type: c.type,
+    x: c.x,
+    col: c.col || '',
+    ys: [...c.ys],
+    agg: c.agg,
+    sort: c.sort,
+    topN: c.topN,
+    showLabel: c.showLabel
+  };
+  if (!getField(cfg.x) || !cfg.ys.map(metricField).filter(Boolean).length) {
+    toast('当前图表还没有有效的维度或指标');
+    return;
+  }
+  state.ov.layout.push({
+    id: 'w' + (state.ov.seq++),
+    kind: 'custom',
+    span: 2,
+    metric: '',
+    title: name,
+    chart: cfg
+  });
+  saveOvLayout();
+  state.ov.built = false;
+  showView('overview');
+  toast(`已把「${name}」添加到概览`);
+}
+
+function renameOvWidget(id, name) {
+  const w = state.ov.layout.find(x => x.id === id);
+  if (!w) return;
+  w.title = name;
+  saveOvLayout();
+  const el = $(`.ov-widget[data-wid="${id}"]`);
+  if (el) {
+    const h3 = el.querySelector('.ov-w-title h3');
+    if (h3) { h3.textContent = name; h3.title = name; }
+  }
+  toast(`已重命名为「${name}」`);
+}
+
+function goChartsForAdd() {
+  showView('charts');
+  toast('在「图表分析」里调好图表，再点右上角「添加到概览」');
+}
+
+function removeOvWidget(id) {
+  const w = state.ov.layout.find(x => x.id === id);
+  if (!w) return;
+  state.ov.layout = state.ov.layout.filter(x => x.id !== id);
+  saveOvLayout();
+  state.ov.built = false;
+  buildOvBoard();
+  toast(`已删除「${w.title || OV_WIDGET_DEFS[w.kind].label}」，可用「恢复默认」还原推荐布局`);
+}
+
+function resetOvLayout() {
+  if (!window.confirm('恢复默认看板布局？当前的自定义顺序与增删会被覆盖。')) return;
+  state.ov.layout = ovNormLayout(OV_DEFAULT_LAYOUT);
+  saveOvLayout();
+  state.ov.built = false;
+  buildOvBoard();
+  toast('已恢复默认布局');
+}
+
+function applyOvSpan(el, w) {
+  el.classList.toggle('span-2', w.span === 2);
+}
+
+function syncOvLayoutFromDom() {
+  const board = $('#ov-board');
+  if (!board) return;
+  const ids = $$('#ov-board .ov-widget').map(el => el.dataset.wid);
+  const map = new Map(state.ov.layout.map(w => [w.id, w]));
+  state.ov.layout = ids.map(id => map.get(id)).filter(Boolean);
+  saveOvLayout();
+}
+
+function onOvBoardClick(e) {
+  const btn = e.target.closest('.ov-ico');
+  if (!btn) return;
+  const el = btn.closest('.ov-widget');
+  if (!el) return;
+  const w = state.ov.layout.find(x => x.id === el.dataset.wid);
+  if (!w) return;
+  const act = btn.dataset.act;
+
+  if (act === 'del') { removeOvWidget(w.id); return; }
+  if (act === 'rename') {
+    openOvNameModal({
+      heading: '重命名模块',
+      desc: '只改显示名称，不影响图表配置。',
+      value: w.title || OV_WIDGET_DEFS[w.kind].label,
+      okText: '保存',
+      onOk: name => renameOvWidget(w.id, name)
+    });
+    return;
+  }
+  if (act === 'span') {
+    w.span = w.span === 2 ? 1 : 2;
+    applyOvSpan(el, w);
+    saveOvLayout();
+    requestAnimationFrame(() => resizeCharts());
+    return;
+  }
+  if (act === 'up' || act === 'down') {
+    const idx = state.ov.layout.indexOf(w);
+    const to = act === 'up' ? idx - 1 : idx + 1;
+    if (to < 0 || to >= state.ov.layout.length) return;
+    state.ov.layout.splice(idx, 1);
+    state.ov.layout.splice(to, 0, w);
+    saveOvLayout();
+    state.ov.built = false;
+    buildOvBoard();
+  }
+}
+
+function onOvDragStart(e) {
+  if (!state.ov.editing) { e.preventDefault(); return; }
+  const el = e.target.closest('.ov-widget');
+  if (!el) return;
+  state.ov.dragId = el.dataset.wid;
+  el.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', el.dataset.wid); } catch (err) { /* noop */ }
+}
+
+function onOvDragOver(e) {
+  if (!state.ov.editing || !state.ov.dragId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const board = $('#ov-board');
+  if (!board) return;
+  const drag = board.querySelector(`.ov-widget[data-wid="${state.ov.dragId}"]`);
+  const over = e.target.closest('.ov-widget');
+  if (!drag || !over || over === drag) return;
+  const r = over.getBoundingClientRect();
+  const after = (e.clientY > r.top + r.height / 2) || (e.clientY > r.top && e.clientX > r.left + r.width / 2);
+  board.insertBefore(drag, after ? over.nextSibling : over);
+}
+
+function onOvDrop(e) {
+  if (!state.ov.dragId) return;
+  e.preventDefault();
+}
+
+function onOvDragEnd() {
+  const drag = $('#ov-board .ov-widget.dragging');
+  if (drag) drag.classList.remove('dragging');
+  if (!state.ov.dragId) return;
+  state.ov.dragId = '';
+  syncOvLayoutFromDom();
+  requestAnimationFrame(() => resizeCharts());
 }
 
 function pickKpis() {
@@ -1415,7 +2199,7 @@ function sparkline(values, color) {
   </svg>`;
 }
 
-function renderQuality() {
+function qualityStats() {
   const ds = state.dataset;
   let missing = 0;
   const totalCells = ds.rows.length * ds.fields.length;
@@ -1434,7 +2218,7 @@ function renderQuality() {
 
   const row = (k, v, extra = '') => `<div class="q-row"><span class="q-k">${k}</span><span class="q-v">${v}</span>${extra}</div>`;
 
-  $('#quality').innerHTML = `
+  const html = `
     <div class="q-row">
       <span class="q-k">完整度</span>
       <span class="q-v">${completeness.toFixed(1)}%</span>
@@ -1447,6 +2231,7 @@ function renderQuality() {
     ${row('重复记录', dup + ' 条', `<span class="q-tag ${dup ? 'warn' : ''}" style="margin-left:auto">${dup ? '建议去重' : '无重复'}</span>`)}
     ${row('数据来源', ds.source === 'template' ? '行业模板 · 示例数据' : '本地导入文件')}
   `;
+  return { html, completeness, missing, dup };
 }
 
 /* ------------------------- 10. 图表分析 ------------------------- */
@@ -1793,9 +2578,15 @@ function pagerHTML(page, pages) {
 }
 
 /* ------------------------- 13. 数据源 ------------------------- */
+/* 行业模板展示顺序：IT 故障工单、IT 资产台账排到最后 */
+const TPL_DISPLAY_ORDER = [
+  ...TEMPLATES.filter(t => t.id !== 'itops' && t.id !== 'itasset'),
+  ...TEMPLATES.filter(t => t.id === 'itops' || t.id === 'itasset')
+];
+
 function renderTemplates() {
   const cur = state.dataset && state.dataset.tplId;
-  $('#tpl-grid').innerHTML = TEMPLATES.map(t => `
+  $('#tpl-grid').innerHTML = TPL_DISPLAY_ORDER.map(t => `
     <div class="tpl ${cur === t.id ? 'on' : ''}" data-tpl="${t.id}">
       ${t.badge ? `<span class="tpl-badge">${t.badge}</span>` : ''}
       <div class="tpl-head">
@@ -2071,6 +2862,42 @@ function bindEvents() {
     $(id).onchange = () => applyCustomDate('overview');
   });
 
+  /* 概览自定义看板：添加来源于图表分析，删除 / 排序 / 重命名 / 宽度 */
+  $('#btn-ov-add').onclick = () => goChartsForAdd();
+  $('#btn-ov-edit').onclick = () => setOvEditing(!state.ov.editing);
+  $('#btn-ov-reset').onclick = () => resetOvLayout();
+  const ovBoard = $('#ov-board');
+  if (ovBoard) {
+    ovBoard.addEventListener('click', onOvBoardClick);
+    ovBoard.addEventListener('dragstart', onOvDragStart);
+    ovBoard.addEventListener('dragover', onOvDragOver);
+    ovBoard.addEventListener('drop', onOvDrop);
+    ovBoard.addEventListener('dragend', onOvDragEnd);
+  }
+
+  // 图表分析：把当前图表命名后添加到概览
+  $('#btn-add-overview').onclick = () => {
+    const xf = getField(state.chart.x);
+    const mfs = state.chart.ys.map(metricField).filter(Boolean);
+    if (!xf || !mfs.length) { toast('请先选择行维度与统计指标'); return; }
+    openOvNameModal({
+      heading: '添加到概览',
+      desc: `${chartTypeLabel(state.chart.type)} · ${chartConfigDesc(state.chart)}`,
+      value: defaultChartName(),
+      okText: '添加到概览',
+      onOk: name => addChartToOverview(name)
+    });
+  };
+  $('#ov-modal-cancel').onclick = () => closeOvNameModal();
+  $('#ov-modal-ok').onclick = () => confirmOvNameModal();
+  $('#ov-modal-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); confirmOvNameModal(); }
+    else if (e.key === 'Escape') closeOvNameModal();
+  });
+  $('#ov-modal').addEventListener('click', e => {
+    if (e.target.id === 'ov-modal') closeOvNameModal();
+  });
+
   $('#btn-png').onclick = () => {
     const inst = state.charts.get('chart-main');
     if (!inst) { toast('图表尚未生成'); return; }
@@ -2196,22 +3023,13 @@ function bindEvents() {
   });
 }
 
-/* ------------------------- 18. 图表引擎迟到加载 ------------------------- */
-/* echarts 异步加载完成后调用：置位标志并重画当前视图的图表 */
-window.__dcEchartsReady = function () {
-  if (!window.echarts) return;
-  ECHARTS_OK = true;
-  state.charts.forEach(inst => { try { inst.dispose(); } catch (e) { /* noop */ } });
-  state.charts.clear();
-  try { renderCurrentView(); } catch (e) { /* noop */ }
-  requestAnimationFrame(resizeCharts);
-};
-
 /* ------------------------- 17. 初始化 ------------------------- */
 function init() {
   bindEvents();
-  if (!ECHARTS_OK) toast('图表引擎加载中，稍等几秒图表会自动出现');
-  applyDataset(buildDataset(TEMPLATES[0]));
+  if (!ECHARTS_OK) toast('图表引擎加载失败，请检查网络');
+  loadOvLayout();
+  /* 默认载入列表里的第一个模板（零售电商） */
+  applyDataset(buildDataset(TPL_DISPLAY_ORDER[0]));
   const hash = (location.hash || '').replace('#', '');
   const [v, param] = hash.split('/');
   showView(['overview', 'charts', 'pivot', 'table', 'source'].includes(v) ? v : 'overview');
