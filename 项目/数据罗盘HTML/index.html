@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>数据罗盘 · 行业数据分析</title>
 <link rel="stylesheet" href="styles.css?v=5">
-<script src="echarts.min.js"></script>
+<link rel="preload" href="echarts.min.js?v=9" as="script">
+<script src="echarts.min.js?v=9" async onload="window.__dcEchartsReady && window.__dcEchartsReady()"></script>
 </head>
 <body>
 
@@ -353,7 +354,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<script src="app.js?v=8"></script>
+<script src="app.min.js?v=9" defer></script>
 </body>
 </html>
 

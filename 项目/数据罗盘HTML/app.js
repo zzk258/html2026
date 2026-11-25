@@ -9,6 +9,12 @@ const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 const PALETTE = ['#4f46e5', '#06b6d4', '#f59e0b', '#ec4899', '#10b981', '#8b5cf6', '#ef4444', '#14b8a6', '#f97316', '#6366f1'];
 const FONT = 'system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif';
 
+/* 图表库改为异步加载：还没到位时先给个占位对象，避免构建配色时直接抛错 */
+if (!window.echarts || !window.echarts.graphic) {
+  window.echarts = window.echarts || {};
+  window.echarts.graphic = { LinearGradient: function () { return '#4f46e5'; } };
+}
+
 function hashStr(s) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -591,17 +597,26 @@ function syncAggDefault() {
 }
 
 /* ------------------------- 6. ECharts 基础设施 ------------------------- */
-const ECHARTS_OK = typeof window.echarts !== 'undefined';
+let ECHARTS_OK = !!(window.echarts && window.echarts.init);
+
+/* 图表库异步加载完成时由 index.html 的 onload 调用：把当前视图补画一遍 */
+window.__dcEchartsReady = function () {
+  ECHARTS_OK = true;
+  try { renderCurrentView(); resizeCharts(); } catch (e) { /* 有渲染异常也不影响页面其他部分 */ }
+};
 
 function mount(id, option) {
   const el = document.getElementById(id);
   if (!el) return null;
-  if (!ECHARTS_OK) {
-    el.innerHTML = '<div class="empty">图表引擎未加载，请检查网络连接后刷新页面</div>';
+  if (!ECHARTS_OK || !window.echarts || !window.echarts.init) {
+    el.innerHTML = '<div class="empty">图表引擎加载中…（网络慢时需要几秒，图表会自动出现）</div>';
     return null;
   }
   let inst = window.echarts.getInstanceByDom(el);
-  if (!inst) inst = window.echarts.init(el, null, { renderer: 'canvas' });
+  if (!inst) {
+    el.innerHTML = '';
+    inst = window.echarts.init(el, null, { renderer: 'canvas' });
+  }
   inst.setOption(option, true);
   state.charts.set(id, inst);
   return inst;
@@ -3026,7 +3041,7 @@ function bindEvents() {
 /* ------------------------- 17. 初始化 ------------------------- */
 function init() {
   bindEvents();
-  if (!ECHARTS_OK) toast('图表引擎加载失败，请检查网络');
+  if (!ECHARTS_OK) toast('图表引擎加载中，稍等几秒图表会自动出现');
   loadOvLayout();
   /* 默认载入列表里的第一个模板（零售电商） */
   applyDataset(buildDataset(TPL_DISPLAY_ORDER[0]));
